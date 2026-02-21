@@ -2,15 +2,200 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    height: 100vh;
+    background: #06091a;
+  }
+
+  #root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.25);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.45);
+  }
 }
 
-* {
-  box-sizing: border-box;
+@layer components {
+
+  /* ── Tab Bar ── */
+  .tab-bar {
+    @apply flex items-center gap-0.5 px-2 pt-1.5 pb-0;
+    background: linear-gradient(180deg, #0d1325 0%, #0a0f20 100%);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+
+  .browser-tab {
+    @apply flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-t-lg transition-all duration-200 cursor-pointer max-w-[200px] min-w-[100px];
+    color: rgba(200, 214, 229, 0.6);
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    -webkit-app-region: no-drag;
+  }
+
+  .browser-tab:hover {
+    color: rgba(200, 214, 229, 0.85);
+    background: rgba(59, 130, 246, 0.06);
+  }
+
+  .browser-tab.active {
+    color: #e8f0fe;
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(59, 130, 246, 0.15);
+    border-bottom-color: transparent;
+  }
+
+  .browser-tab .tab-close {
+    @apply opacity-0 hover:opacity-100 ml-auto p-0.5 rounded transition-opacity;
+  }
+
+  .browser-tab:hover .tab-close,
+  .browser-tab.active .tab-close {
+    @apply opacity-60;
+  }
+
+  .browser-tab .tab-close:hover {
+    @apply opacity-100 bg-red-500/20 text-red-400;
+  }
+
+  /* ── Address Bar ── */
+  .address-bar {
+    @apply flex items-center gap-2 px-3 py-1.5;
+    background: #0a0f20;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+  }
+
+  .url-input {
+    @apply flex-1 px-4 py-2 text-sm rounded-full transition-all duration-200 outline-none;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    color: #c8d6e5;
+    font-family: 'Inter', monospace;
+  }
+
+  .url-input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  }
+
+  .url-input::placeholder {
+    color: rgba(200, 214, 229, 0.3);
+  }
+
+  /* ── Bookmarks Bar ── */
+  .bookmarks-bar {
+    @apply flex items-center gap-1 px-3 py-1;
+    background: rgba(10, 15, 32, 0.8);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.05);
+  }
+
+  .bookmark-chip {
+    @apply flex items-center gap-1.5 px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer whitespace-nowrap;
+    color: rgba(200, 214, 229, 0.65);
+    background: transparent;
+  }
+
+  .bookmark-chip:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #93c5fd;
+  }
+
+  /* ── New Tab Content ── */
+  .new-tab-content {
+    @apply flex-1 flex flex-col items-center justify-start overflow-y-auto;
+    background: radial-gradient(ellipse at 50% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
+      linear-gradient(180deg, #06091a 0%, #0a1020 50%, #06091a 100%);
+    padding-top: 8vh;
+  }
+
+  /* ── Quick Access Tiles ── */
+  .quick-tile {
+    @apply flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 cursor-pointer;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(59, 130, 246, 0.08);
+    min-width: 96px;
+  }
+
+  .quick-tile:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
+  }
+
+  .quick-tile .tile-icon {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold mb-2;
+  }
+
+  .quick-tile .tile-label {
+    @apply text-xs font-medium;
+    color: rgba(200, 214, 229, 0.65);
+  }
+
+  /* ── AI Sidebar ── */
+  .ai-sidebar {
+    @apply fixed top-0 right-0 h-full flex flex-col transition-transform duration-300 z-50;
+    width: 360px;
+    background: rgba(10, 15, 32, 0.95);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(59, 130, 246, 0.12);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .ai-sidebar.closed {
+    transform: translateX(100%);
+  }
+
+  /* ── Nav Buttons ── */
+  .nav-btn {
+    @apply p-1.5 rounded-md transition-all duration-200;
+    color: rgba(200, 214, 229, 0.45);
+  }
+
+  .nav-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: rgba(200, 214, 229, 0.85);
+  }
+}
+
+/* ── Sacred Geometry Canvas ── */
+#sacred-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
 }
