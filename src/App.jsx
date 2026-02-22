@@ -6,24 +6,41 @@ import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch
 const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
 
 async function queryHeadyBrain(query) {
-  // 1. Try live Brain API first
+  // Check sessionStorage cache first
+  const cacheKey = `heady-search:${query.toLowerCase().trim()}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.ts < 5 * 60 * 1000) {
+        return { ...parsed.data, cached: true };
+      }
+      sessionStorage.removeItem(cacheKey);
+    }
+  } catch { /* ignore */ }
+
+  // 1. Try live Brain API first (3s timeout for fast fallback)
   try {
     const resp = await fetch(`${HEADY_BRAIN_URL}/api/brain/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Heady-Source': 'headyweb-browser' },
       body: JSON.stringify({ message: query, model: 'heady-brain', temperature: 0.7 }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(3000),
     });
     if (resp.ok) {
       const data = await resp.json();
       if (data.response || data.text) {
-        return { ok: true, title: `Heady Brain: "${query}"`, response: data.response || data.text, source: 'heady-brain-live', query, confidence: 0.95 };
+        const result = { ok: true, title: `Heady Brain: "${query}"`, response: data.response || data.text, source: 'heady-brain-live', query, confidence: 0.95 };
+        try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, ts: Date.now() })); } catch { /* full */ }
+        return result;
       }
     }
   } catch { /* Brain API unavailable — use knowledge base */ }
 
   // 2. Use Heady Knowledge Base (always works)
-  return searchHeadyKnowledge(query);
+  const result = searchHeadyKnowledge(query);
+  try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, ts: Date.now() })); } catch { /* full */ }
+  return result;
 }
 
 // ── Search Context ──
@@ -568,6 +585,8 @@ function AuthModal({ open, onClose, onAuth }) {
             {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
+        {/* Cloudflare Turnstile — invisible bot protection */}
+        <div className="cf-turnstile mt-3" data-sitekey="0x4AAAAAAXXXXXXXXXXXXXXX" data-theme="dark" data-size="invisible"></div>
       </div>
     </div>
   );
@@ -633,6 +652,8 @@ function App() {
 
   useEffect(() => {
     const unsub = onAuthChange(setUser);
+    // Pre-warm connection to Heady Brain
+    fetch(`${HEADY_BRAIN_URL}/api/brain/health`, { signal: AbortSignal.timeout(2000) }).catch(() => { });
     return () => unsub && unsub();
   }, []);
 
