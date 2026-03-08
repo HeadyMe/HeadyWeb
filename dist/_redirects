@@ -1,0 +1,3 @@
+/api/*  https://api.headysystems.com/api/:splat  200
+/auth   https://gateway.headysystems.com/auth  200
+/clipboard/*  https://gateway.headysystems.com/clipboard/:splat  200
