@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
-import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
+import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch, isFirebaseConfigured } from './firebase.js';
 
 // ── Heady Brain API + Knowledge Base ──
 const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
@@ -47,9 +47,10 @@ async function queryHeadyBrain(query) {
 const SearchContext = createContext();
 
 // ── Icons (inline SVG to avoid lucide-react import issues) ──
-const Icon = ({ d, size = 16, className = '' }) => (
+const Icon = ({ d, size = 16, className = '', ariaHidden = true }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}
+    aria-hidden={ariaHidden} focusable="false">
     <path d={d} />
   </svg>
 );
@@ -71,7 +72,22 @@ const Icons = {
   zap: 'M13 2L3 14h9l-1 10 10-12h-9l1-10z',
   chat: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
   settings: 'M12 8a4 4 0 100 8 4 4 0 000-8z',
+  help: 'M12 2a10 10 0 100 20 10 10 0 000-20zM9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01',
+  signout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
 };
+
+// ── Unified Ecosystem Sites (single source of truth) ──
+const ECOSYSTEM_SITES = [
+  { name: 'HeadySystems', url: 'https://headysystems.com', color: '#3b82f6', icon: '⚙️', desc: 'Architecture docs' },
+  { name: 'HeadyMe', url: 'https://headyme.com', color: '#8b5cf6', icon: '👤', desc: 'Admin command center' },
+  { name: 'HeadyBuddy', url: 'https://headybuddy.org', color: '#10b981', icon: '🤖', desc: 'Interactive AI chat' },
+  { name: 'HeadyMCP', url: 'https://headymcp.com', color: '#f59e0b', icon: '🔌', desc: 'API & tool integration' },
+  { name: 'HeadyIO', url: 'https://headyio.com', color: '#06b6d4', icon: '🌐', desc: 'Data platform' },
+  { name: 'HeadyConnection', url: 'https://headyconnection.org', color: '#ec4899', icon: '🤝', desc: 'Community platform' },
+  { name: 'Heady Docs', url: 'https://docs.headysystems.com', color: '#14b8a6', icon: '📚', desc: 'Documentation & guides' },
+  { name: 'Google', url: 'https://google.com', color: '#4285f4', icon: '🔍', desc: 'Web search' },
+  { name: 'GitHub', url: 'https://github.com', color: '#8b949e', icon: '🐙', desc: 'Source code' },
+];
 
 // ── Sacred Geometry Canvas ──
 function SacredGeometryBg() {
@@ -163,36 +179,30 @@ function SacredGeometryBg() {
     return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animId); };
   }, []);
 
-  return <canvas ref={canvasRef} id="sacred-canvas" />;
+  return <canvas ref={canvasRef} id="sacred-canvas" aria-hidden="true" />;
 }
-
-// ── Quick Access Sites ──
-const QUICK_SITES = [
-  { name: 'HeadySystems', url: 'https://headysystems.com', color: '#3b82f6', icon: '⚙️' },
-  { name: 'HeadyMe', url: 'https://headyme.com', color: '#8b5cf6', icon: '👤' },
-  { name: 'HeadyBuddy', url: 'https://headybuddy.org', color: '#10b981', icon: '🤖' },
-  { name: 'HeadyMCP', url: 'https://headymcp.com', color: '#f59e0b', icon: '🔌' },
-  { name: 'HeadyIO', url: 'https://headyio.com', color: '#06b6d4', icon: '🌐' },
-  { name: 'HeadyConnection', url: 'https://headyconnection.org', color: '#ec4899', icon: '🤝' },
-  { name: 'Google', url: 'https://google.com', color: '#4285f4', icon: '🔍' },
-  { name: 'GitHub', url: 'https://github.com', color: '#8b949e', icon: '🐙' },
-];
 
 // ── Tab Component ──
 function TabBar({ tabs, activeTab, onSelectTab, onCloseTab, onNewTab }) {
   return (
-    <div className="tab-bar">
+    <div className="tab-bar" role="tablist" aria-label="Browser tabs">
       {tabs.map((tab, i) => (
-        <div key={tab.id} className={`browser-tab ${activeTab === i ? 'active' : ''}`}
+        <div key={tab.id}
+          className={`browser-tab ${activeTab === i ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === i}
+          tabIndex={activeTab === i ? 0 : -1}
           onClick={() => onSelectTab(i)}>
-          <span className="text-sm mr-1">{tab.favicon || '🌐'}</span>
+          <span className="text-sm mr-1" aria-hidden="true">{tab.favicon || '🌐'}</span>
           <span className="truncate flex-1">{tab.title}</span>
-          <button className="tab-close" onClick={e => { e.stopPropagation(); onCloseTab(i); }}>
+          <button className="tab-close"
+            aria-label={`Close ${tab.title} tab`}
+            onClick={e => { e.stopPropagation(); onCloseTab(i); }}>
             <Icon d={Icons.x} size={12} />
           </button>
         </div>
       ))}
-      <button className="nav-btn ml-1" onClick={onNewTab} title="New Tab">
+      <button className="nav-btn ml-1" onClick={onNewTab} aria-label="New Tab" title="New Tab">
         <Icon d={Icons.plus} size={14} />
       </button>
       <div className="flex-1" /> {/* Drag area */}
@@ -224,9 +234,9 @@ function AddressBar({ url, onNavigate, onToggleSidebar, onSearch }) {
 
   return (
     <div className="address-bar">
-      <button className="nav-btn" title="Back"><Icon d={Icons.back} /></button>
-      <button className="nav-btn" title="Forward"><Icon d={Icons.forward} /></button>
-      <button className="nav-btn" title="Refresh"><Icon d={Icons.refresh} /></button>
+      <button className="nav-btn" aria-label="Go back" title="Back"><Icon d={Icons.back} /></button>
+      <button className="nav-btn" aria-label="Go forward" title="Forward"><Icon d={Icons.forward} /></button>
+      <button className="nav-btn" aria-label="Refresh page" title="Refresh"><Icon d={Icons.refresh} /></button>
 
       <form onSubmit={handleSubmit} className="flex-1 flex">
         <div className="url-input flex items-center gap-2 w-full">
@@ -240,31 +250,26 @@ function AddressBar({ url, onNavigate, onToggleSidebar, onSearch }) {
         </div>
       </form>
 
-      <button className="nav-btn" title="Shield Status"><Icon d={Icons.shield} /></button>
-      <button className="nav-btn" title="HeadyBuddy AI" onClick={onToggleSidebar}>
+      <button className="nav-btn" aria-label="Shield status" title="Shield Status"><Icon d={Icons.shield} /></button>
+      <button className="nav-btn" aria-label="Open HeadyBuddy AI sidebar" title="HeadyBuddy AI" onClick={onToggleSidebar}>
         <Icon d={Icons.sparkles} className="text-blue-400" />
       </button>
-      <button className="nav-btn" title="Settings"><Icon d={Icons.settings} /></button>
+      <button className="nav-btn" aria-label="Settings" title="Settings"><Icon d={Icons.settings} /></button>
     </div>
   );
 }
 
 // ── Bookmarks Bar ──
 function BookmarksBar() {
-  const bookmarks = [
-    { name: 'HeadySystems', url: 'https://headysystems.com', icon: '⚙️' },
-    { name: 'HeadyMe', url: 'https://headyme.com', icon: '👤' },
-    { name: 'HeadyBuddy', url: 'https://headybuddy.org', icon: '🤖' },
-    { name: 'HeadyMCP', url: 'https://headymcp.com', icon: '🔌' },
-    { name: 'Heady Docs', url: 'https://docs.headysystems.com', icon: '📚' },
-    { name: 'GitHub', url: 'https://github.com', icon: '🐙' },
-  ];
+  // Use first 6 ecosystem sites (excluding general sites like Google/GitHub)
+  const bookmarks = ECOSYSTEM_SITES.filter(s => !['Google', 'GitHub'].includes(s.name)).slice(0, 6);
 
   return (
-    <div className="bookmarks-bar">
+    <div className="bookmarks-bar" aria-label="Bookmarks">
       {bookmarks.map((b, i) => (
-        <a key={i} href={b.url} className="bookmark-chip" target="_blank" rel="noopener noreferrer">
-          <span>{b.icon}</span>
+        <a key={i} href={b.url} className="bookmark-chip" target="_blank" rel="noopener noreferrer"
+          aria-label={`${b.name} — ${b.desc}`}>
+          <span aria-hidden="true">{b.icon}</span>
           <span>{b.name}</span>
         </a>
       ))}
@@ -310,14 +315,14 @@ function AISidebar({ open, onClose }) {
   };
 
   return (
-    <div className={`ai-sidebar ${open ? '' : 'closed'}`}>
+    <div className={`ai-sidebar ${open ? '' : 'closed'}`} role="complementary" aria-label="HeadyBuddy AI Sidebar">
       <div className="flex items-center justify-between px-4 py-3 border-b border-blue-500/10">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🤖</span>
+          <span className="text-lg" aria-hidden="true">🤖</span>
           <span className="text-sm font-semibold text-white">HeadyBuddy AI</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 font-medium">LIVE</span>
         </div>
-        <button className="nav-btn" onClick={onClose}><Icon d={Icons.x} /></button>
+        <button className="nav-btn" onClick={onClose} aria-label="Close sidebar"><Icon d={Icons.x} /></button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((m, i) => (
@@ -333,7 +338,7 @@ function AISidebar({ open, onClose }) {
           <input type="text" value={input} onChange={e => setInput(e.target.value)}
             placeholder="Ask HeadyBuddy..."
             className="flex-1 px-3 py-2 text-sm rounded-lg bg-white/5 border border-blue-500/10 text-gray-200 outline-none focus:border-blue-500/30" />
-          <button type="submit" className="px-3 py-2 rounded-lg bg-blue-600/30 text-blue-300 text-sm font-medium hover:bg-blue-600/50 transition-colors">
+          <button type="submit" aria-label="Send message" className="px-3 py-2 rounded-lg bg-blue-600/30 text-blue-300 text-sm font-medium hover:bg-blue-600/50 transition-colors">
             Send
           </button>
         </div>
@@ -344,6 +349,9 @@ function AISidebar({ open, onClose }) {
 
 // ── Heady Brain Search Results ──
 function HeadyBrainResults({ query, result, loading }) {
+  // Pick 3 related ecosystem sites for display (excluding generic ones)
+  const relatedSites = ECOSYSTEM_SITES.filter(s => !['Google', 'GitHub'].includes(s.name)).slice(0, 3);
+
   return (
     <div className="flex-1 overflow-y-auto" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.04) 0%, transparent 50%), #06091a' }}>
       <div className="max-w-3xl mx-auto px-6 py-8">
@@ -397,18 +405,15 @@ function HeadyBrainResults({ query, result, loading }) {
               </span>
             </div>
 
-            {/* Heady Ecosystem Links */}
+            {/* Heady Ecosystem Links — from unified list */}
             <div className="border-t border-white/5 pt-4">
               <div className="text-xs text-white/25 mb-3 font-medium">Related Heady Services</div>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  { name: 'Ask HeadyBuddy', url: 'https://headybuddy.org', icon: '🤖', desc: 'Interactive AI chat' },
-                  { name: 'HeadyMCP', url: 'https://headymcp.com', icon: '🔌', desc: 'API & tool integration' },
-                  { name: 'HeadySystems', url: 'https://headysystems.com', icon: '⚙️', desc: 'Architecture docs' },
-                ].map((s, i) => (
+                {relatedSites.map((s, i) => (
                   <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                    aria-label={`${s.name} — ${s.desc}`}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 hover:border-blue-500/20 hover:bg-blue-500/5 transition-all">
-                    <span>{s.icon}</span>
+                    <span aria-hidden="true">{s.icon}</span>
                     <div>
                       <div className="text-xs text-white/60 font-medium">{s.name}</div>
                       <div className="text-[10px] text-white/25">{s.desc}</div>
@@ -425,7 +430,7 @@ function HeadyBrainResults({ query, result, loading }) {
 }
 
 // ── New Tab Page ──
-function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
+function NewTabPage({ onSearch, user, onSignIn, onSignOut, onPricing }) {
   const [searchInput, setSearchInput] = useState('');
   const [time, setTime] = useState(new Date());
   const searchRef = useRef(null);
@@ -445,6 +450,9 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
 
   const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   const formatDate = (d) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // Quick-access tiles: ecosystem sites (the first 8 entries)
+  const quickTiles = ECOSYSTEM_SITES.slice(0, 8);
 
   return (
     <div className="new-tab-content relative">
@@ -468,21 +476,32 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
               <input type="text" ref={searchRef} value={searchInput} onChange={e => setSearchInput(e.target.value)}
                 placeholder="Search with Heady Brain — AI-powered search"
                 className="flex-1 bg-transparent border-none outline-none text-white/90 text-base placeholder:text-white/20 font-light" />
-              <span className="text-[10px] text-blue-400/30 font-medium ml-2 flex-shrink-0 px-1.5 py-0.5 rounded border border-blue-400/10">⌘K</span>
+              <span className="text-[10px] text-blue-400/30 font-medium ml-2 flex-shrink-0 px-1.5 py-0.5 rounded border border-blue-400/10" aria-hidden="true">⌘K</span>
             </div>
           </div>
         </form>
 
         {/* Quick Access Tiles */}
         <div className="grid grid-cols-4 gap-3 mb-10 w-full max-w-lg">
-          {QUICK_SITES.map((site, i) => (
-            <a key={i} href={site.url} target="_blank" rel="noopener noreferrer" className="quick-tile group">
-              <div className="tile-icon" style={{ background: `${site.color}18`, color: site.color }}>
+          {quickTiles.map((site, i) => (
+            <a key={i} href={site.url} target="_blank" rel="noopener noreferrer"
+              className="quick-tile group"
+              aria-label={`${site.name} — ${site.desc}`}>
+              <div className="tile-icon" style={{ background: `${site.color}18`, color: site.color }} aria-hidden="true">
                 {site.icon}
               </div>
               <span className="tile-label group-hover:text-white/80 transition-colors">{site.name}</span>
             </a>
           ))}
+        </div>
+
+        {/* Docs/Help Entry Point */}
+        <div className="flex items-center gap-4 mb-6">
+          <a href="https://docs.headysystems.com" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-teal-600/10 border border-teal-500/15 text-teal-300/80 text-xs font-medium hover:bg-teal-600/20 transition-colors">
+            <Icon d={Icons.help} size={14} ariaHidden={true} />
+            Docs & Help
+          </a>
         </div>
 
         {/* Status Bar */}
@@ -497,6 +516,12 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
           <span className="text-white/25">HCFP Enforced</span>
           <span className="text-white/10">|</span>
           <span className="text-white/25">Sacred Geometry ✦</span>
+          {!isFirebaseConfigured && (
+            <>
+              <span className="text-white/10">|</span>
+              <span className="text-amber-400/60 font-medium">Demo Mode</span>
+            </>
+          )}
         </div>
 
         {/* Account & Pricing */}
@@ -508,11 +533,23 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
               </div>
               <span className="text-white/40 text-xs">{user.displayName || user.email}</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-400/70">Free</span>
+              <button onClick={onSignOut} aria-label="Sign out"
+                className="ml-1 p-1 rounded-md hover:bg-white/5 text-white/30 hover:text-white/60 transition-colors"
+                title="Sign out">
+                <Icon d={Icons.signout} size={14} />
+              </button>
             </div>
           ) : (
-            <button onClick={onSignIn} className="px-4 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/15 text-blue-300 text-xs font-medium hover:bg-blue-600/30 transition-colors">
-              Sign In
-            </button>
+            isFirebaseConfigured ? (
+              <button onClick={onSignIn} className="px-4 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/15 text-blue-300 text-xs font-medium hover:bg-blue-600/30 transition-colors">
+                Sign In
+              </button>
+            ) : (
+              <span className="px-4 py-1.5 rounded-full bg-amber-600/10 border border-amber-500/15 text-amber-300/60 text-xs font-medium cursor-default"
+                title="Firebase not configured — auth unavailable in demo mode">
+                Demo Mode
+              </span>
+            )
           )}
           <button onClick={onPricing} className="px-4 py-1.5 rounded-full bg-purple-600/15 border border-purple-500/10 text-purple-300/80 text-xs font-medium hover:bg-purple-600/25 transition-colors">
             View Plans
@@ -533,11 +570,33 @@ function AuthModal({ open, onClose, onAuth }) {
 
   if (!open) return null;
 
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleEmail = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    setError('');
+
+    // Client-side validation
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!validateEmail(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter a password.');
+      return;
+    }
+    if (mode === 'signup' && password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
     const fn = mode === 'signup' ? signUpEmail : signInEmail;
-    const result = await fn(email, password);
+    const result = await fn(email.trim(), password);
     setLoading(false);
     if (result.error) setError(result.error);
     else { onAuth(result.user); onClose(); }
@@ -552,17 +611,19 @@ function AuthModal({ open, onClose, onAuth }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}
+      role="dialog" aria-modal="true" aria-label={mode === 'signup' ? 'Create account' : 'Sign in'}>
       <div className="w-full max-w-sm mx-4 rounded-2xl bg-[#0d1325] border border-blue-500/15 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="text-center mb-5">
-          <div className="text-2xl mb-1">✦</div>
+          <div className="text-2xl mb-1" aria-hidden="true">✦</div>
           <h2 className="text-white font-semibold text-lg">Welcome to HeadyWeb</h2>
           <p className="text-white/40 text-xs mt-1">{mode === 'signup' ? 'Create your account' : 'Sign in to your account'}</p>
         </div>
-        {error && <div className="text-red-400 text-xs mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/15">{error}</div>}
+        {error && <div className="text-red-400 text-xs mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/15" role="alert">{error}</div>}
         <button onClick={handleGoogle} disabled={loading}
+          aria-label="Continue with Google"
           className="w-full mb-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
           Continue with Google
         </button>
         <div className="flex items-center gap-3 my-3">
@@ -570,23 +631,28 @@ function AuthModal({ open, onClose, onAuth }) {
           <span className="text-white/20 text-xs">or</span>
           <div className="flex-1 h-px bg-white/5" />
         </div>
-        <form onSubmit={handleEmail} className="space-y-2.5">
+        <form onSubmit={handleEmail} className="space-y-2.5" noValidate>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
+            autoComplete="email"
+            aria-label="Email address"
             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-blue-500/30" />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password"
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            aria-label="Password"
             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-blue-500/30" />
+          {mode === 'signup' && (
+            <p className="text-white/25 text-[10px] px-1">Password must be at least 6 characters</p>
+          )}
           <button type="submit" disabled={loading}
             className="w-full px-4 py-2.5 rounded-xl bg-blue-600/80 text-white text-sm font-medium hover:bg-blue-600 transition-colors">
             {loading ? 'Processing...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
           </button>
         </form>
         <div className="text-center mt-3">
-          <button onClick={() => setMode(m => m === 'signin' ? 'signup' : 'signin')} className="text-blue-400/60 text-xs hover:text-blue-400">
+          <button onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError(''); }} className="text-blue-400/60 text-xs hover:text-blue-400">
             {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
-        {/* Cloudflare Turnstile — invisible bot protection */}
-        <div className="cf-turnstile mt-3" data-sitekey="0x4AAAAAAXXXXXXXXXXXXXXX" data-theme="dark" data-size="invisible"></div>
       </div>
     </div>
   );
@@ -602,7 +668,8 @@ function PricingModal({ open, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}
+      role="dialog" aria-modal="true" aria-label="HeadyWeb Plans">
       <div className="w-full max-w-3xl mx-4 rounded-2xl bg-[#0d1325] border border-blue-500/15 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="text-center mb-6">
           <h2 className="text-white font-semibold text-xl">HeadyWeb Plans</h2>
@@ -620,7 +687,7 @@ function PricingModal({ open, onClose }) {
               <ul className="space-y-2 mb-5">
                 {plan.features.map((f, j) => (
                   <li key={j} className="text-white/50 text-xs flex items-center gap-2">
-                    <span className="text-green-400 text-xs">✓</span> {f}
+                    <span className="text-green-400 text-xs" aria-hidden="true">✓</span> {f}
                   </li>
                 ))}
               </ul>
@@ -657,17 +724,31 @@ function App() {
     return () => unsub && unsub();
   }, []);
 
+  // Sign out handler
+  const handleSignOut = useCallback(async () => {
+    await logOut();
+    setUser(null);
+  }, []);
+
+  // Fixed: use functional updater to avoid stale closure over tabs.length
   const newTab = useCallback(() => {
     const id = Date.now();
-    setTabs(prev => [...prev, { id, title: 'New Tab', url: 'headyweb://newtab', favicon: '✦' }]);
-    setActiveTab(tabs.length);
-  }, [tabs.length]);
+    setTabs(prev => {
+      const next = [...prev, { id, title: 'New Tab', url: 'headyweb://newtab', favicon: '✦' }];
+      setActiveTab(next.length - 1);
+      return next;
+    });
+  }, []);
 
+  // Fixed: use functional updaters throughout to avoid stale state
   const closeTab = useCallback((index) => {
-    if (tabs.length <= 1) return;
-    setTabs(prev => prev.filter((_, i) => i !== index));
-    setActiveTab(prev => prev >= index ? Math.max(0, prev - 1) : prev);
-  }, [tabs.length]);
+    setTabs(prev => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== index);
+      setActiveTab(a => a >= index ? Math.max(0, a - 1) : a);
+      return next;
+    });
+  }, []);
 
   const navigate = useCallback((url) => {
     if (!url) return;
@@ -705,7 +786,10 @@ function App() {
 
       <div className="flex-1 relative overflow-hidden">
         {isNewTab ? (
-          <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} />
+          <NewTabPage onSearch={handleSearch} user={user}
+            onSignIn={() => setAuthOpen(true)}
+            onSignOut={handleSignOut}
+            onPricing={() => setPricingOpen(true)} />
         ) : isSearch ? (
           <HeadyBrainResults query={searchState.query} result={searchState.result} loading={searchState.loading} />
         ) : (
