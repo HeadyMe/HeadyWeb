@@ -1,5 +1,8 @@
 // Heady Knowledge Base — provides real answers about the Heady ecosystem
 // Used as the primary search engine when Heady Brain API is unavailable
+// URLs are sourced from the canonical registry so they stay in sync.
+
+import { HEADY_SITES, HEADY_API } from './heady-registry.js';
 
 const HEADY_KNOWLEDGE = [
     {
@@ -8,10 +11,10 @@ const HEADY_KNOWLEDGE = [
         answer: `Heady Systems is an AI-powered ecosystem designed by a single developer to operate as a fully autonomous, intelligent infrastructure platform.
 
 **Core Components:**
-• **HeadyBrain** — Proprietary AI routing layer at manager.headysystems.com that processes queries through optimized inference
+• **HeadyBrain** — Proprietary AI routing layer at ${HEADY_API.brainBase} that processes queries through optimized inference
 • **HeadyBattle** — Adversarial intelligence engine that challenges assumptions and validates outputs
 • **HeadySoul** — Ethical oversight and decision governance system
-• **HeadyBuddy** — User-facing AI assistant available at headybuddy.org
+• **HeadyBuddy** — User-facing AI assistant available at ${HEADY_SITES.headybuddy.url}
 • **HeadyMCP** — Model Context Protocol integration for tool orchestration
 • **HeadyWeb** — Chromium-based intelligent browser (you're using it now!)
 • **HCFP** — Heady Core Functionality Platform — enforces production domain rules and auto-success mode
@@ -19,22 +22,22 @@ const HEADY_KNOWLEDGE = [
 **Infrastructure:**
 The platform runs on Cloudflare (DNS/CDN/WAF), Node.js + Express backends, Drupal 11 CMS, Qdrant vector database for semantic search, and Sacred Geometry design principles throughout.
 
-Visit headysystems.com for architecture details.`,
+Visit ${HEADY_SITES.headysystems.url} for architecture details or ${HEADY_SITES.headydocs.url} for full documentation.`,
         source: 'heady-knowledge-base',
     },
     {
         keywords: ['headybuddy', 'heady buddy', 'ai assistant', 'chat bot'],
         title: 'HeadyBuddy — Your AI Assistant',
-        answer: `HeadyBuddy is the user-facing AI assistant in the Heady ecosystem, available at headybuddy.org.
+        answer: `HeadyBuddy is the user-facing AI assistant in the Heady ecosystem, available at ${HEADY_SITES.headybuddy.url}.
 
 **Features:**
 • Real-time AI chat powered by Heady Brain
 • Browser extension (Chrome/Chromium) with sidebar panel
 • Widget embeddable on any website via headybuddy-widget.js
-• Routes through manager.headysystems.com/api/brain/chat
+• Routes through ${HEADY_API.brainChat}
 • Privacy-first — no third-party tracking
 
-HeadyBuddy is integrated directly into HeadyWeb's sidebar (click the ✨ icon in the address bar).`,
+HeadyBuddy is integrated directly into HeadyWeb's sidebar (click the sparkle icon in the address bar).`,
         source: 'heady-knowledge-base',
     },
     {
@@ -50,7 +53,7 @@ HeadyBuddy is integrated directly into HeadyWeb's sidebar (click the ✨ icon in
 • Knowledge base and service registry search
 • Health monitoring across all Heady services
 
-Available at headymcp.com. The MCP server connects through manager.headysystems.com.`,
+Available at ${HEADY_SITES.headymcp.url}. The MCP server connects through ${HEADY_API.brainBase}.`,
         source: 'heady-knowledge-base',
     },
     {
@@ -72,13 +75,13 @@ Available at headymcp.com. The MCP server connects through manager.headysystems.
 • Pro ($9.99/mo) — unlimited AI queries, priority processing, search history sync
 • Enterprise (custom) — team features, API access, custom branding
 
-You're currently using HeadyWeb!`,
+You're currently using HeadyWeb! Visit ${HEADY_SITES.headydocs.url} for docs.`,
         source: 'heady-knowledge-base',
     },
     {
         keywords: ['headyme', 'admin', 'dashboard', 'command center'],
         title: 'HeadyMe — Admin Command Center',
-        answer: `HeadyMe (headyme.com) is the Sacred Geometry admin dashboard for the Heady ecosystem.
+        answer: `HeadyMe (${HEADY_SITES.headyme.url}) is the Sacred Geometry admin dashboard for the Heady ecosystem.
 
 **Features:**
 • Real-time service monitoring
@@ -92,7 +95,7 @@ You're currently using HeadyWeb!`,
     {
         keywords: ['headyconnection', 'connection', 'community'],
         title: 'HeadyConnection — Community Platform',
-        answer: `HeadyConnection (headyconnection.org) is the community and connection platform in the Heady ecosystem.
+        answer: `HeadyConnection (${HEADY_SITES.headyconnection.url}) is the community and connection platform in the Heady ecosystem.
 
 It provides social features, user networking, and community-driven AI interactions.`,
         source: 'heady-knowledge-base',
@@ -102,13 +105,13 @@ It provides social features, user networking, and community-driven AI interactio
         title: 'HeadyWeb Plans & Pricing',
         answer: `**HeadyWeb Browser Plans:**
 
-🆓 **Free**
+**Free**
 • AI-powered search (limited queries/day)
 • Sacred Geometry new-tab page
 • Bookmarks & tab management
 • Basic HeadyBuddy sidebar
 
-⭐ **Pro — $9.99/month**
+**Pro — $9.99/month**
 • Unlimited AI search queries
 • Priority Heady Brain processing
 • Search history sync across devices
@@ -116,7 +119,7 @@ It provides social features, user networking, and community-driven AI interactio
 • Ad-free experience
 • HeadyBattle deep analysis on search results
 
-🏢 **Enterprise — Custom pricing**
+**Enterprise — Custom pricing**
 • Team/org management
 • API access to Heady Brain
 • Custom branding
@@ -139,6 +142,23 @@ Sign up to get started!`,
 • Animated nodes representing the 20 Heady AI interconnections
 
 The Sacred Geometry symbolizes the interconnected intelligence architecture of the Heady platform.`,
+        source: 'heady-knowledge-base',
+    },
+    {
+        keywords: ['docs', 'documentation', 'help', 'guide', 'manual'],
+        title: 'Heady Documentation',
+        answer: `The Heady Docs portal at ${HEADY_SITES.headydocs.url} is the canonical source for all Heady ecosystem documentation.
+
+**Available Docs:**
+• Architecture overview — system design, service map, data flow
+• Auth contract — cross-site Firebase auth, allowed origins, profile schema
+• HeadyBrain API — chat endpoint, models, rate limits
+• HeadyMCP — MCP tool catalog, integration guide
+• HeadyBuddy — widget embedding, extension setup
+• HeadyWeb — browser features, keyboard shortcuts, plans
+• Operator runbook — deployment, monitoring, incident response
+
+Visit ${HEADY_SITES.headydocs.url} or click the Docs bookmark in the bookmarks bar.`,
         source: 'heady-knowledge-base',
     },
 ];
@@ -183,7 +203,7 @@ export function searchHeadyKnowledge(query) {
     return {
         ok: true,
         title: `Search: "${query}"`,
-        response: `Heady Brain is processing your query. For the best results on general topics, HeadyBuddy (sidebar) can provide interactive, contextual AI responses.\n\n**Quick actions:**\n• Click the ✨ icon in the address bar to open HeadyBuddy\n• Visit headybuddy.org for full AI chat\n• Try searching for Heady-specific topics: "HeadyWeb plans", "HeadyMCP", "Sacred Geometry"`,
+        response: `Heady Brain is processing your query. For the best results on general topics, HeadyBuddy (sidebar) can provide interactive, contextual AI responses.\n\n**Quick actions:**\n• Click the sparkle icon in the address bar to open HeadyBuddy\n• Visit ${HEADY_SITES.headybuddy.url} for full AI chat\n• Browse ${HEADY_SITES.headydocs.url} for documentation\n• Try searching for Heady-specific topics: "HeadyWeb plans", "HeadyMCP", "Sacred Geometry"`,
         source: 'heady-search',
         query,
         confidence: 0.3,
