@@ -1,0 +1,87 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+!.env.example
+!.env.template
+!.env.rebuild.example
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.iml
+.project
+.classpath
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Test & coverage
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+
+# Docker
+docker-compose.override.yml
+
+# Terraform / IaC
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Secrets & credentials — enterprise critical
+*.pem
+*.key
+*.cert
+*.p12
+*.jks
+credentials.json
+service-account*.json
+gcloud-key*.json
+.gcp-credentials/
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+.heady_cache/
+
+# Package manager locks (keep only one)
+# Uncomment the ones you DON'T use:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp

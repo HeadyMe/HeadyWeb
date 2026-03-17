@@ -1,0 +1,15 @@
+# Heady Systems — Code Ownership
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @HeadyMe
+
+# CI/CD and infrastructure
+.github/ @HeadyMe
+Dockerfile @HeadyMe
+docker-compose*.yml @HeadyMe
+
+# Security-sensitive files
+.env* @HeadyMe
+**/secrets/ @HeadyMe
+**/credentials/ @HeadyMe
