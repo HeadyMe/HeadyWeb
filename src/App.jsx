@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
 import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
+import DevTools from './components/DevTools.jsx';
+import HeadyIDE from './components/HeadyIDE.jsx';
+import Extensions from './components/Extensions.jsx';
+import SettingsPage from './components/Settings.jsx';
+import BookmarksPage from './components/Bookmarks.jsx';
+import DownloadManager from './components/DownloadManager.jsx';
+import HistoryPage from './components/History.jsx';
+import SidePanelComponent from './components/SidePanel.jsx';
 
 // ── Heady Brain API + Knowledge Base ──
 const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
@@ -241,10 +249,15 @@ function AddressBar({ url, onNavigate, onToggleSidebar, onSearch }) {
       </form>
 
       <button className="nav-btn" title="Shield Status"><Icon d={Icons.shield} /></button>
+      <button className="nav-btn" title="Extensions" onClick={() => onNavigate('headyweb://extensions')}>
+        <Icon d={Icons.zap} size={14} />
+      </button>
       <button className="nav-btn" title="HeadyBuddy AI" onClick={onToggleSidebar}>
         <Icon d={Icons.sparkles} className="text-blue-400" />
       </button>
-      <button className="nav-btn" title="Settings"><Icon d={Icons.settings} /></button>
+      <button className="nav-btn" title="Settings" onClick={() => onNavigate('headyweb://settings')}>
+        <Icon d={Icons.settings} />
+      </button>
     </div>
   );
 }
@@ -649,6 +662,8 @@ function App() {
   const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState(null); // 'devtools' | 'ide' | 'extensions' | 'settings' | 'bookmarks' | 'downloads' | 'history' | null
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthChange(setUser);
@@ -656,6 +671,23 @@ function App() {
     fetch(`${HEADY_BRAIN_URL}/api/brain/health`, { signal: AbortSignal.timeout(2000) }).catch(() => { });
     return () => unsub && unsub();
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === 't') { e.preventDefault(); newTab(); }
+      if (mod && e.key === 'w') { e.preventDefault(); closeTab(activeTab); }
+      if (mod && e.key === 'l') { e.preventDefault(); document.querySelector('.url-input input')?.focus(); }
+      if (mod && e.shiftKey && e.key === 'I') { e.preventDefault(); setDevToolsOpen(p => !p); }
+      if (mod && e.shiftKey && e.key === 'B') { e.preventDefault(); setActivePanel(p => p === 'bookmarks' ? null : 'bookmarks'); }
+      if (mod && e.key === 'j') { e.preventDefault(); setActivePanel(p => p === 'downloads' ? null : 'downloads'); }
+      if (mod && e.key === 'h' && e.shiftKey) { e.preventDefault(); setActivePanel(p => p === 'history' ? null : 'history'); }
+      if (e.key === 'F12') { e.preventDefault(); setDevToolsOpen(p => !p); }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, newTab, closeTab]);
 
   const newTab = useCallback(() => {
     const id = Date.now();
@@ -671,6 +703,25 @@ function App() {
 
   const navigate = useCallback((url) => {
     if (!url) return;
+    // Handle internal headyweb:// URLs
+    const internalRoutes = {
+      'headyweb://ide': { panel: 'ide', title: 'HeadyAI IDE', favicon: '💻' },
+      'headyweb://settings': { panel: 'settings', title: 'Settings', favicon: '⚙️' },
+      'headyweb://extensions': { panel: 'extensions', title: 'Extensions', favicon: '🧩' },
+      'headyweb://bookmarks': { panel: 'bookmarks', title: 'Bookmarks', favicon: '⭐' },
+      'headyweb://downloads': { panel: 'downloads', title: 'Downloads', favicon: '📥' },
+      'headyweb://history': { panel: 'history', title: 'History', favicon: '📜' },
+    };
+    const route = internalRoutes[url];
+    if (route) {
+      setActivePanel(route.panel);
+      setSearchState({ query: '', result: null, loading: false });
+      setTabs(prev => prev.map((tab, i) =>
+        i === activeTab ? { ...tab, url, title: route.title, favicon: route.favicon } : tab
+      ));
+      return;
+    }
+    setActivePanel(null);
     setSearchState({ query: '', result: null, loading: false });
     setTabs(prev => prev.map((tab, i) =>
       i === activeTab ? { ...tab, url, title: url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] || 'New Tab' } : tab
@@ -691,6 +742,19 @@ function App() {
   const currentTab = tabs[activeTab] || tabs[0];
   const isNewTab = currentTab?.url === 'headyweb://newtab';
   const isSearch = currentTab?.url?.startsWith('headyweb://search');
+  const isInternal = currentTab?.url?.startsWith('headyweb://') && !isNewTab && !isSearch;
+
+  const renderPanel = () => {
+    switch (activePanel) {
+      case 'ide': return <HeadyIDE onNavigate={navigate} />;
+      case 'settings': return <SettingsPage onNavigate={navigate} />;
+      case 'extensions': return <Extensions onNavigate={navigate} />;
+      case 'bookmarks': return <BookmarksPage onNavigate={navigate} />;
+      case 'downloads': return <DownloadManager onNavigate={navigate} />;
+      case 'history': return <HistoryPage onNavigate={navigate} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-[#06091a] text-white">
@@ -703,18 +767,27 @@ function App() {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <BookmarksBar />
 
-      <div className="flex-1 relative overflow-hidden">
-        {isNewTab ? (
-          <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} />
-        ) : isSearch ? (
-          <HeadyBrainResults query={searchState.query} result={searchState.result} loading={searchState.loading} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-            <div className="text-center">
-              <Icon d={Icons.globe} size={40} className="mx-auto mb-3 text-blue-400/20" />
-              <p className="text-white/30 font-medium">{currentTab?.url}</p>
-              <p className="text-white/15 text-xs mt-1">Web content renders here in full Chromium</p>
+      <div className="flex-1 relative overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden">
+          {isNewTab ? (
+            <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} />
+          ) : isSearch ? (
+            <HeadyBrainResults query={searchState.query} result={searchState.result} loading={searchState.loading} />
+          ) : isInternal && activePanel ? (
+            renderPanel()
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
+              <div className="text-center">
+                <Icon d={Icons.globe} size={40} className="mx-auto mb-3 text-blue-400/20" />
+                <p className="text-white/30 font-medium">{currentTab?.url}</p>
+                <p className="text-white/15 text-xs mt-1">Web content renders here in full Chromium</p>
+              </div>
             </div>
+          )}
+        </div>
+        {devToolsOpen && (
+          <div className="h-[300px] border-t border-white/10 overflow-hidden">
+            <DevTools onClose={() => setDevToolsOpen(false)} />
           </div>
         )}
       </div>
