@@ -1,0 +1,213 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  Service Wiring Matrix — Complete Inter-Service Communication   ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
+# This matrix defines HOW every component talks to every other component.
+# The Liquid Latent OS achieves optimal communication through:
+#   - Direct MCP calls for tool invocations
+#   - Event bus for async notifications
+#   - Vector channel for latent space operations
+#   - HTTP for external/edge communication
+#   - Gossip for state synchronization
+
+version: "5.0.0"
+
+# ═══════════════════════════════════════════════════════════════════
+# STARTUP SEQUENCE (Dependency-ordered boot)
+# ═══════════════════════════════════════════════════════════════════
+startup-sequence:
+  phase-1-foundation:
+    order: 1
+    services: [heady-health, heady-guard, edge-auth-worker, heady-pulse]
+    description: "Health, security, authentication, heartbeat"
+    timeout: 10s
+
+  phase-2-data:
+    order: 2
+    services: [domain-router, heady-memory, heady-vortex]
+    description: "Routing, memory, log aggregation"
+    timeout: 15s
+
+  phase-3-intelligence:
+    order: 3
+    services: [heady-conductor, heady-brains, heady-soul, heady-autocontext]
+    description: "Orchestration, meta-controller, ethics, intelligence"
+    timeout: 20s
+
+  phase-4-mesh:
+    order: 4
+    services: [heady-mesh, heady-resonance, heady-gravity, heady-tide]
+    description: "Service mesh, synchronization, load distribution"
+    timeout: 15s
+
+  phase-5-agents:
+    order: 5
+    services: [heady-vinci, heady-sentinel, heady-bridge, heady-forge]
+    description: "Learning, security, integration, building agents"
+    timeout: 20s
+
+  phase-6-execution:
+    order: 6
+    services: [heady-bee-factory, hcfullpipeline-executor, heady-quantum, heady-wave]
+    description: "Bee dispatch, pipeline execution, optimization"
+    timeout: 20s
+
+  phase-7-support:
+    order: 7
+    services: [observability-kernel, budget-tracker, heady-governance, auto-success-engine]
+    description: "Observability, cost tracking, governance, auto-success"
+    timeout: 15s
+
+  phase-8-edge:
+    order: 8
+    services: [heady-mcp-worker, liquid-gateway-worker, heady-buddy-worker]
+    description: "Edge workers activation"
+    timeout: 10s
+
+# ═══════════════════════════════════════════════════════════════════
+# COMMUNICATION PATTERNS
+# ═══════════════════════════════════════════════════════════════════
+communication-patterns:
+
+  # Request/Response (synchronous, direct)
+  request-response:
+    protocol: "http+mcp"
+    timeout: "5s × φ"
+    retry:
+      max: 3
+      backoff: "PHI^n × 1000ms ± 38.2% jitter"
+    used-by:
+      - "client → heady-conductor → target-node"
+      - "pipeline-executor → stage-handler"
+      - "bee-factory → bee-instance"
+
+  # Publish/Subscribe (async, decoupled)
+  pub-sub:
+    protocol: "event-bus"
+    delivery: "at-least-once"
+    ordering: "per-topic"
+    used-by:
+      - "service.* → observability-kernel"
+      - "pipeline.* → auto-success-engine"
+      - "memory.* → heady-vortex"
+      - "incident.* → heady-sentinel"
+
+  # Vector Operations (latent space)
+  vector-ops:
+    protocol: "vector-channel"
+    encoding: "float32"
+    dimensions: [384, 768, 1536]
+    used-by:
+      - "heady-autocontext → heady-memory"
+      - "heady-spectra → heady-memory"
+      - "heady-intuition → heady-memory"
+
+  # Gossip (state synchronization)
+  gossip:
+    protocol: "udp+gossip"
+    fanout: 3
+    convergence: "O(log N) rounds"
+    used-by:
+      - "heady-pulse → all-nodes"
+      - "heady-harmony → consensus-group"
+      - "heady-resonance → phase-group"
+
+  # Stream (continuous data flow)
+  streaming:
+    protocol: "websocket+sse"
+    backpressure: "heady-tide managed"
+    used-by:
+      - "heady-flux → heady-aurora"
+      - "heady-observer → heady-vortex"
+      - "heady-buddy-worker → client"
+
+# ═══════════════════════════════════════════════════════════════════
+# CRITICAL DATA FLOWS
+# ═══════════════════════════════════════════════════════════════════
+data-flows:
+
+  user-request:
+    path:
+      - "Client → edge-auth-worker (verify)"
+      - "→ heady-mcp-worker (route)"
+      - "→ heady-conductor (classify + route)"
+      - "→ heady-autocontext (5-pass enrich)"
+      - "→ heady-intuition (predict intent)"
+      - "→ target-node (execute)"
+      - "→ heady-governance (log)"
+      - "→ heady-memory (cache)"
+      - "→ Client (respond)"
+    csl-gates: [0.500, 0.691, 0.809]
+
+  pipeline-execution:
+    path:
+      - "hcfullpipeline-executor (orchestrate 21 stages)"
+      - "→ each stage: heady-conductor (route) → target-node (execute)"
+      - "→ heady-soul (ethics check at quality gate)"
+      - "→ heady-governance (compliance)"
+      - "→ auto-success-engine (verify success)"
+    csl-gates: [0.500, 0.809, 0.882, 0.927]
+
+  memory-operation:
+    path:
+      - "heady-spectra (embed input)"
+      - "→ heady-autocontext (enrich)"
+      - "→ heady-memory (T0 write)"
+      - "→ heady-tide (backpressure check)"
+      - "→ consolidation-cycle (T0→T1→T2)"
+    vector-dims: [1536, 384]
+
+  self-healing:
+    path:
+      - "heady-pulse (detect missing heartbeat)"
+      - "→ heady-sentinel (alert)"
+      - "→ heady-lens (diagnose)"
+      - "→ heady-conductor (select strategy)"
+      - "→ heady-phoenix (restore if catastrophic)"
+      - "→ heady-harmony (consensus on action)"
+      - "→ heady-mesh (reroute traffic)"
+    priority: P0
+
+  deploy:
+    path:
+      - "deploy-trigger → heady-conductor"
+      - "→ heady-forge (build artifacts)"
+      - "→ heady-sentinel (security scan)"
+      - "→ heady-mesh (canary routing)"
+      - "→ cloud-run + cloudflare (deploy)"
+      - "→ heady-pulse (verify heartbeats)"
+      - "→ heady-aurora (visualize status)"
+    rollback: "heady-phoenix (snapshot-based)"
+
+# ═══════════════════════════════════════════════════════════════════
+# PHI-OPTIMIZED PARAMETERS
+# ═══════════════════════════════════════════════════════════════════
+phi-parameters:
+  circuit-breaker:
+    failure-threshold: 5        # fibonacci
+    success-threshold: 3        # fibonacci
+    half-open-timeout: "48.5s"  # 30s × φ
+
+  rate-limiting:
+    burst: 89                   # fibonacci
+    sustained: 55               # fibonacci
+    window: "1s"
+
+  connection-pooling:
+    hot: "34%"                  # phi-pool
+    warm: "21%"                 # phi-pool
+    cold: "13%"                 # phi-pool
+    reserve: "8%"               # phi-pool
+    governance: "5%"            # phi-pool
+
+  backoff:
+    base: "1000ms"
+    multiplier: 1.618           # phi
+    jitter: "±38.2%"            # psi × psi
+    max-delay: "30000ms"
+
+  health-check:
+    interval: "617ms"           # ~1000 × psi
+    timeout: "3000ms"
+    unhealthy-threshold: 3      # fibonacci
+    healthy-threshold: 2        # fibonacci
