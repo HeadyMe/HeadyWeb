@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "heady-mcp": {
+      "command": "node",
+      "args": ["mcp-servers/heady-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Core Heady MCP Server — 45 tools for status, config, security, deploy, latent space"
+    },
+    "heady-liquid-nodes": {
+      "command": "node",
+      "args": ["mcp-servers/liquid-nodes-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Liquid Nodes — GitHub, Cloudflare, Vertex AI, Colab, Latent Space connectors"
+    },
+    "heady-orchestration": {
+      "command": "node",
+      "args": ["mcp-servers/heady-orchestration-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Orchestration — Swarms, Bees, CSL routing, Pipelines, Task Graphs"
+    },
+    "heady-intelligence": {
+      "command": "node",
+      "args": ["mcp-servers/heady-intelligence-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Intelligence — Battle Arena, Monte Carlo, Patterns, AutoContext, ORS"
+    },
+    "heady-memory": {
+      "command": "node",
+      "args": ["mcp-servers/heady-memory-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Memory — 3-tier (T0/T1/T2), 384D vectors, φ-decay consolidation"
+    },
+    "heady-governance": {
+      "command": "node",
+      "args": ["mcp-servers/heady-governance-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Governance — Policies, Cost Tracking, RBAC, Audit, Story Driver"
+    },
+    "heady-unified": {
+      "command": "node",
+      "args": ["mcp-servers/heady-unified-mcp-server.js"],
+      "cwd": "${HEADY_ROOT}",
+      "description": "Unified — Message Bus, Service Mesh, Ecosystem, Evolution Engine"
+    }
+  }
+}

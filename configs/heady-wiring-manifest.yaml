@@ -1,0 +1,303 @@
+# HEADY_BRAND:BEGIN
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  HEADY SYSTEMS — Service Wiring Manifest                      ║
+# ║  ∞ SACRED GEOMETRY ∞  Perfect Liquid Dynamic Parallel Async   ║
+# ║  Distributed Intelligently Orchestrated Optimized Latent OS   ║
+# ╚══════════════════════════════════════════════════════════════════╝
+# HEADY_BRAND:END
+
+version: "4.1.0"
+name: HeadyWiringManifest
+description: >
+  Master wiring manifest ensuring all Heady components communicate
+  optimally as a perfect liquid dynamic parallel async distributed
+  intelligently orchestrated optimized latent OS.
+
+# ═══════════════════════════════════════════════════════════════════
+# COMMUNICATION BACKBONE
+# ═══════════════════════════════════════════════════════════════════
+
+communication:
+  # Primary message bus for all inter-service events
+  message_bus:
+    type: HeadyMessageBus
+    max_listeners: 55  # FIB[10]
+    buffer_size: 2584  # FIB[13]
+    channels:
+      - "service.*"           # Service lifecycle events
+      - "swarm.*"             # Swarm operations
+      - "pipeline.*"          # Pipeline stage transitions
+      - "memory.*"            # Memory tier operations
+      - "governance.*"        # Policy enforcement events
+      - "evolution.*"         # Mutation and canary events
+      - "cost.*"              # Cost tracking events
+      - "health.*"            # Health check results
+      - "pattern.*"           # Pattern detection events
+      - "distillation.*"      # Distillation pipeline events
+      - "battle.*"            # Battle arena events
+      - "error.*"             # Error and recovery events
+      - "deploy.*"            # Deployment events
+
+  # Correlation ID propagation
+  tracing:
+    correlation_header: "X-Heady-Correlation-ID"
+    format: "cor-{timestamp_base36}-{random_4}"
+    propagation: [message_bus, http_headers, grpc_metadata]
+
+  # Circuit breaker defaults
+  circuit_breaker:
+    max_failures: 5  # FIB[5]
+    reset_timeout_ms: 13000  # FIB[7] × 1000
+    half_open_max_calls: 3  # FIB[4]
+
+  # Retry policy with phi-backoff
+  retry:
+    max_attempts: 5  # FIB[5]
+    base_delay_ms: 1000
+    backoff_multiplier: 1.618  # PHI
+    jitter_factor: 0.382  # 1 - PSI
+    max_delay_ms: 34000  # FIB[9] × 1000
+
+# ═══════════════════════════════════════════════════════════════════
+# SERVICE WIRING — How each service connects to others
+# ═══════════════════════════════════════════════════════════════════
+
+service_wiring:
+  heady-gateway:
+    port: 3330
+    connects_to:
+      - service: heady-manager
+        protocol: HTTP
+        purpose: "Route API requests to manager"
+      - service: heady-conductor
+        protocol: gRPC
+        purpose: "Task orchestration routing"
+      - service: auth-session
+        protocol: HTTP
+        purpose: "JWT verification"
+    receives_from:
+      - source: cloudflare-workers
+        protocol: HTTP
+        purpose: "Edge-proxied requests"
+    csl_gate: 0.500  # MINIMUM
+
+  heady-manager:
+    port: 3301
+    connects_to:
+      - service: heady-brain
+        protocol: Event Bus
+        purpose: "Cognitive operations"
+      - service: heady-conductor
+        protocol: Event Bus
+        purpose: "Task routing"
+      - service: heady-memory
+        protocol: Event Bus
+        purpose: "Vector storage/recall"
+      - service: heady-autocontext
+        protocol: HTTP
+        purpose: "5-pass enrichment"
+    mcp_server: true
+    mcp_tools: 45  # Total MCP tools exposed
+
+  heady-conductor:
+    port: 3303
+    connects_to:
+      - service: all-agents
+        protocol: Event Bus
+        purpose: "Distribute tasks to agents"
+      - service: heady-bee-factory
+        protocol: Event Bus
+        purpose: "Bee spawning and lifecycle"
+      - service: heady-memory
+        protocol: Event Bus
+        purpose: "Context recall for routing"
+    pools:
+      hot: { percentage: 34, priority: "> CSL.HIGH (0.882)" }
+      warm: { percentage: 21, priority: "> CSL.MEDIUM (0.809)" }
+      cold: { percentage: 13, priority: "> CSL.LOW (0.691)" }
+      reserve: { percentage: 8, purpose: "Burst capacity" }
+      governance: { percentage: 5, purpose: "Audit and compliance" }
+
+  heady-brain:
+    port: 3302
+    connects_to:
+      - service: heady-autocontext
+        protocol: HTTP
+        purpose: "Context enrichment"
+      - service: heady-memory
+        protocol: Event Bus
+        purpose: "Knowledge recall"
+      - service: heady-soul
+        protocol: Event Bus
+        purpose: "Ethical decision escalation"
+    receives_from:
+      - source: heady-conductor
+        protocol: Event Bus
+      - source: heady-buddy
+        protocol: Event Bus
+
+  heady-buddy:
+    port: 3310
+    connects_to:
+      - service: heady-brain
+        protocol: Event Bus
+        purpose: "Cognitive operations"
+      - service: heady-memory
+        protocol: Event Bus
+        purpose: "Conversation memory"
+      - service: heady-autocontext
+        protocol: HTTP
+        purpose: "Context enrichment"
+    receives_from:
+      - source: heady-gateway
+        protocol: HTTP
+      - source: web-clients
+        protocol: WebSocket
+      - source: discord-bot
+        protocol: Event Bus
+      - source: slack-bot
+        protocol: Event Bus
+
+  heady-memory:
+    tier_wiring:
+      T0:
+        backend: upstash-redis
+        protocol: Redis
+        ttl: "89 seconds (FIB[11])"
+        purpose: "Hot working memory"
+      T1:
+        backend: in-process
+        protocol: Internal
+        max_entries: 55  # FIB[10]
+        purpose: "Short-term session memory"
+      T2:
+        backend: postgresql-pgvector
+        protocol: SQL + HNSW
+        hnsw: { m: 21, ef_construction: 89, dimensions: 384 }
+        purpose: "Long-term persistent memory"
+    consolidation:
+      schedule: "every 6 hours"
+      decay_function: "φ^(age_hours × decay_rate)"
+      promotion_threshold: "access_count >= FIB[5]"
+
+  heady-autocontext:
+    port: 3396
+    five_passes:
+      - pass: 1
+        name: "Memory Recall"
+        weight: 0.34
+        connects_to: heady-memory
+      - pass: 2
+        name: "Semantic Expansion"
+        weight: 0.21
+        connects_to: embedding-generator-node
+      - pass: 3
+        name: "Knowledge Grounding"
+        weight: 0.21
+        connects_to: graph-rag-bee
+      - pass: 4
+        name: "Temporal Context"
+        weight: 0.13
+        connects_to: temporal-context-node
+      - pass: 5
+        name: "Wisdom Synthesis"
+        weight: 0.11
+        connects_to: heady-vinci
+
+# ═══════════════════════════════════════════════════════════════════
+# MCP SERVER WIRING — All MCP servers and their tool inventory
+# ═══════════════════════════════════════════════════════════════════
+
+mcp_servers:
+  heady-mcp-server:
+    transport: stdio
+    tools_count: 45
+    categories:
+      - status_and_health: [heady_status, heady_health_ping, heady_brain_status]
+      - config_management: [heady_read_config, heady_list_configs, heady_config_validate]
+      - git_operations: [heady_git_log, heady_git_diff, heady_git_status]
+      - deployment: [heady_deploy_status, heady_deploy_run, heady_deploy_start, heady_deploy_stop, heady_cloudrun_status]
+      - security: [heady_secrets_scan, heady_env_audit, heady_deps_scan]
+      - codelock: [heady_codelock_status, heady_codelock_lock, heady_codelock_unlock, heady_codelock_request, heady_codelock_approve, heady_codelock_deny, heady_codelock_snapshot, heady_codelock_detect, heady_codelock_audit, heady_codelock_users]
+      - latent_space: [heady_latent_record, heady_latent_search, heady_latent_status, heady_latent_log]
+      - translator: [heady_translator_status, heady_translator_translate, heady_translator_adapters, heady_translator_decode, heady_translator_bridge]
+      - conflicts: [heady_conflicts_scan, heady_conflicts_resolve, heady_conflicts_show]
+      - patterns: [heady_patterns_list, heady_patterns_evaluate]
+      - registry: [heady_registry_list, heady_registry_lookup]
+      - utilities: [heady_project_tree, heady_read_file, heady_search, heady_write_file, heady_quickfix, heady_code_stats, heady_docs_freshness, heady_cost_report]
+
+  liquid-nodes-mcp-server:
+    transport: stdio
+    tools_count: 19
+    categories:
+      - github: [github_list_repos, github_repo_info, github_search_code]
+      - gists: [gist_list, gist_get, gist_create]
+      - cloudflare: [cloudflare_list_zones, cloudflare_dns_records, cloudflare_list_workers, cloudflare_list_pages]
+      - vertex_ai: [vertex_list_models, vertex_list_endpoints, vertex_predict]
+      - ai_studio: [aistudio_generate]
+      - colab: [colab_list_notebooks, colab_get_notebook]
+      - latent_space: [latent_store, latent_search, latent_list, latent_delete]
+      - status: [liquid_nodes_status]
+
+  heady-orchestration-mcp-server:
+    transport: stdio
+    tools_count: 11
+    categories:
+      - swarm: [heady_swarm_create, heady_swarm_spawn_bee, heady_swarm_status, heady_swarm_list, heady_swarm_dissolve]
+      - csl: [heady_csl_route, heady_csl_metrics]
+      - pipeline: [heady_pipeline_run, heady_pipeline_advance, heady_pipeline_runs]
+      - task_graph: [heady_task_graph_execute]
+
+  heady-intelligence-mcp-server:
+    transport: stdio
+    tools_count: 14
+    categories:
+      - battle_arena: [heady_battle_create, heady_battle_submit, heady_battle_leaderboard]
+      - monte_carlo: [heady_montecarlo_simulate, heady_montecarlo_history]
+      - patterns: [heady_pattern_capture, heady_pattern_correlate, heady_pattern_list]
+      - drift: [heady_drift_detect]
+      - autocontext: [heady_autocontext_enrich, heady_autocontext_history]
+      - self_awareness: [heady_ors_compute, heady_ors_history, heady_calibrate]
+
+  heady-memory-mcp-server:
+    transport: stdio
+    tools_count: 5
+    categories:
+      - memory: [heady_memory_store, heady_memory_recall, heady_memory_consolidate, heady_memory_stats]
+      - vector: [heady_vector_search]
+
+  heady-governance-mcp-server:
+    transport: stdio
+    tools_count: 14
+    categories:
+      - governance: [heady_governance_enforce, heady_governance_policies, heady_governance_violations, heady_governance_audit]
+      - cost: [heady_cost_record, heady_cost_budget, heady_cost_report_period]
+      - rbac: [heady_rbac_assign, heady_rbac_check, heady_rbac_list]
+      - stories: [heady_story_start, heady_story_chapter, heady_story_complete, heady_story_list]
+
+  heady-unified-mcp-server:
+    transport: stdio
+    tools_count: 14
+    categories:
+      - message_bus: [heady_bus_publish, heady_bus_stats, heady_bus_trace]
+      - service_mesh: [heady_mesh_register, heady_mesh_invoke, heady_mesh_topology, heady_mesh_health]
+      - ecosystem: [heady_ecosystem_map, heady_ecosystem_dependencies, heady_ecosystem_communication]
+      - evolution: [heady_evolution_mutate, heady_evolution_fitness, heady_evolution_canary, heady_evolution_status]
+
+# ═══════════════════════════════════════════════════════════════════
+# TOTAL TOOL INVENTORY
+# ═══════════════════════════════════════════════════════════════════
+
+summary:
+  total_mcp_servers: 7
+  total_tools: 122
+  total_agents: 16
+  total_workflows: 10
+  total_nodes: 24
+  total_repos: 70
+  phi_constants_used: [1.618, 0.618, "FIB sequence"]
+  csl_gates: 5
+  memory_tiers: 3
+  pipeline_stages: 21
+  bee_types: 89
+  domains: 9

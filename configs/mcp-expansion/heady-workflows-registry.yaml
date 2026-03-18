@@ -1,0 +1,374 @@
+# HEADY_BRAND:BEGIN
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  HEADY SYSTEMS — Workflow Registry                             ║
+# ║  ∞ SACRED GEOMETRY ∞  Liquid Dynamic Parallel Async Workflows ║
+# ╚══════════════════════════════════════════════════════════════════╝
+# HEADY_BRAND:END
+
+version: "4.1.0"
+name: HeadyWorkflowRegistry
+description: >
+  Complete registry of all HeadyMCP workflows — orchestrated sequences
+  of tools, agents, and nodes that execute as liquid parallel async
+  pipelines with CSL-gated decision points.
+
+# ═══════════════════════════════════════════════════════════════════
+# CORE WORKFLOWS
+# ═══════════════════════════════════════════════════════════════════
+
+workflows:
+  # ─── Full System Analysis ────────────────────────────────────
+  full_system_analysis:
+    name: "Full System Analysis"
+    description: "Deep analysis of the entire Heady ecosystem"
+    trigger: manual
+    parallel: true
+    steps:
+      - id: status_check
+        tool: heady_status
+        parallel_group: "phase1"
+      - id: config_validate
+        tool: heady_config_validate
+        parallel_group: "phase1"
+      - id: security_scan
+        tool: heady_secrets_scan
+        parallel_group: "phase1"
+      - id: env_audit
+        tool: heady_env_audit
+        parallel_group: "phase1"
+      - id: deps_scan
+        tool: heady_deps_scan
+        parallel_group: "phase1"
+      - id: code_stats
+        tool: heady_code_stats
+        parallel_group: "phase1"
+      - id: ors_compute
+        tool: heady_ors_compute
+        depends_on: [status_check, config_validate]
+        parallel_group: "phase2"
+      - id: ecosystem_map
+        tool: heady_ecosystem_map
+        parallel_group: "phase2"
+      - id: mesh_health
+        tool: heady_mesh_health
+        parallel_group: "phase2"
+      - id: report
+        tool: heady_story_start
+        depends_on: [ors_compute, ecosystem_map, mesh_health]
+        params:
+          title: "Full System Analysis Report"
+
+  # ─── Deployment Pipeline ─────────────────────────────────────
+  deploy_pipeline:
+    name: "Intelligent Deployment Pipeline"
+    description: "CSL-gated deployment with canary rollout and rollback"
+    trigger: manual
+    steps:
+      - id: pre_check
+        tool: heady_mesh_health
+      - id: security_gate
+        tool: heady_secrets_scan
+        csl_gate: 0.927  # CRITICAL threshold
+        depends_on: [pre_check]
+      - id: config_gate
+        tool: heady_config_validate
+        csl_gate: 0.809  # MEDIUM threshold
+        depends_on: [pre_check]
+      - id: pipeline_run
+        tool: heady_pipeline_run
+        depends_on: [security_gate, config_gate]
+        params:
+          variant: FULL_PATH
+      - id: monte_carlo
+        tool: heady_montecarlo_simulate
+        depends_on: [pipeline_run]
+        params:
+          iterations: 1000
+          parameters:
+            success_rate: { min: 0.7, max: 1.0 }
+            latency: { min: 0, max: 500 }
+          successCriteria:
+            success_rate: 0.85
+      - id: canary_deploy
+        tool: heady_evolution_canary
+        depends_on: [monte_carlo]
+        csl_gate: 0.882  # HIGH threshold
+      - id: post_deploy_health
+        tool: heady_mesh_health
+        depends_on: [canary_deploy]
+      - id: narrative
+        tool: heady_story_chapter
+        depends_on: [post_deploy_health]
+        params:
+          narrative: "Deployment completed with canary validation"
+
+  # ─── Swarm Intelligence Session ──────────────────────────────
+  swarm_intelligence:
+    name: "Swarm Intelligence Session"
+    description: "Spawn a bee swarm for collaborative problem solving"
+    trigger: manual
+    steps:
+      - id: create_swarm
+        tool: heady_swarm_create
+        params:
+          strategy: consensus-superposition
+      - id: spawn_analyst
+        tool: heady_swarm_spawn_bee
+        depends_on: [create_swarm]
+        params:
+          beeType: graph-rag-bee
+          resonance: 0.85
+      - id: spawn_judge
+        tool: heady_swarm_spawn_bee
+        depends_on: [create_swarm]
+        params:
+          beeType: judge-bee
+          resonance: 0.90
+      - id: spawn_creative
+        tool: heady_swarm_spawn_bee
+        depends_on: [create_swarm]
+        params:
+          beeType: evolution-bee
+          resonance: 0.75
+      - id: enrich_context
+        tool: heady_autocontext_enrich
+        depends_on: [spawn_analyst, spawn_judge, spawn_creative]
+      - id: battle_test
+        tool: heady_battle_create
+        depends_on: [enrich_context]
+      - id: pattern_capture
+        tool: heady_pattern_capture
+        depends_on: [battle_test]
+      - id: memory_store
+        tool: heady_memory_store
+        depends_on: [pattern_capture]
+        params:
+          type: procedural
+          tier: T1
+
+  # ─── Memory Maintenance ─────────────────────────────────────
+  memory_maintenance:
+    name: "Memory Tier Maintenance"
+    description: "Phi-decay consolidation, compaction, and health check"
+    trigger: scheduled
+    schedule: "every 6h"
+    steps:
+      - id: stats_before
+        tool: heady_memory_stats
+      - id: consolidate
+        tool: heady_memory_consolidate
+        depends_on: [stats_before]
+      - id: stats_after
+        tool: heady_memory_stats
+        depends_on: [consolidate]
+      - id: ors_check
+        tool: heady_ors_compute
+        depends_on: [consolidate]
+      - id: report
+        tool: heady_bus_publish
+        depends_on: [stats_after, ors_check]
+        params:
+          channel: "memory.maintenance.complete"
+
+  # ─── Security Audit Workflow ─────────────────────────────────
+  security_audit:
+    name: "Comprehensive Security Audit"
+    description: "Full security scan with governance policy enforcement"
+    trigger: manual
+    parallel: true
+    steps:
+      - id: secrets_scan
+        tool: heady_secrets_scan
+        parallel_group: "scan"
+      - id: env_audit
+        tool: heady_env_audit
+        parallel_group: "scan"
+      - id: deps_scan
+        tool: heady_deps_scan
+        parallel_group: "scan"
+      - id: codelock_snapshot
+        tool: heady_codelock_snapshot
+        parallel_group: "scan"
+      - id: codelock_detect
+        tool: heady_codelock_detect
+        depends_on: [codelock_snapshot]
+      - id: policy_check
+        tool: heady_governance_policies
+        depends_on: [secrets_scan, env_audit, deps_scan]
+      - id: violation_report
+        tool: heady_governance_violations
+        depends_on: [policy_check]
+      - id: audit_log
+        tool: heady_governance_audit
+        depends_on: [violation_report]
+
+  # ─── Continuous Learning Loop ────────────────────────────────
+  learning_loop:
+    name: "Continuous Learning & Evolution"
+    description: "Pattern capture → Monte Carlo → Evolution → Canary"
+    trigger: scheduled
+    schedule: "every 24h"
+    steps:
+      - id: pattern_list
+        tool: heady_pattern_list
+      - id: monte_carlo
+        tool: heady_montecarlo_simulate
+        depends_on: [pattern_list]
+        params:
+          iterations: 5000
+          phiScale: true
+      - id: mutate
+        tool: heady_evolution_mutate
+        depends_on: [monte_carlo]
+      - id: fitness_eval
+        tool: heady_evolution_fitness
+        depends_on: [mutate]
+      - id: calibrate
+        tool: heady_calibrate
+        depends_on: [fitness_eval]
+      - id: consolidate_memory
+        tool: heady_memory_consolidate
+        depends_on: [calibrate]
+
+  # ─── Cross-Repo Synchronization ─────────────────────────────
+  cross_repo_sync:
+    name: "Cross-Repository Synchronization"
+    description: "Sync configs, schemas, and interfaces across all 70+ repos"
+    trigger: manual
+    steps:
+      - id: ecosystem_map
+        tool: heady_ecosystem_map
+      - id: dependency_graph
+        tool: heady_ecosystem_dependencies
+        depends_on: [ecosystem_map]
+      - id: communication_matrix
+        tool: heady_ecosystem_communication
+        depends_on: [dependency_graph]
+      - id: config_validate
+        tool: heady_config_validate
+        depends_on: [communication_matrix]
+      - id: story_record
+        tool: heady_story_start
+        depends_on: [config_validate]
+        params:
+          title: "Cross-Repo Sync Report"
+
+  # ─── Battle Arena Tournament ─────────────────────────────────
+  battle_tournament:
+    name: "AI Model Battle Tournament"
+    description: "Multi-round tournament with phi-scored rubric evaluation"
+    trigger: manual
+    steps:
+      - id: create_battle
+        tool: heady_battle_create
+        params:
+          models: ["claude", "gpt4", "gemini", "groq"]
+      - id: autocontext
+        tool: heady_autocontext_enrich
+        depends_on: [create_battle]
+      - id: leaderboard
+        tool: heady_battle_leaderboard
+        depends_on: [autocontext]
+      - id: pattern_capture
+        tool: heady_pattern_capture
+        depends_on: [leaderboard]
+        params:
+          type: behavioral
+          name: "battle-performance-pattern"
+
+  # ─── Observability Deep Dive ─────────────────────────────────
+  observability_deep_dive:
+    name: "Observability Deep Dive"
+    description: "Full system health, metrics, traces, and cost analysis"
+    trigger: manual
+    parallel: true
+    steps:
+      - id: mesh_health
+        tool: heady_mesh_health
+        parallel_group: "gather"
+      - id: bus_stats
+        tool: heady_bus_stats
+        parallel_group: "gather"
+      - id: csl_metrics
+        tool: heady_csl_metrics
+        parallel_group: "gather"
+      - id: cost_budget
+        tool: heady_cost_budget
+        parallel_group: "gather"
+      - id: cost_report
+        tool: heady_cost_report_period
+        depends_on: [cost_budget]
+        params:
+          days: 30
+      - id: ors
+        tool: heady_ors_compute
+        depends_on: [mesh_health, bus_stats, csl_metrics]
+      - id: memory_stats
+        tool: heady_memory_stats
+        parallel_group: "gather"
+      - id: evolution_status
+        tool: heady_evolution_status
+        parallel_group: "gather"
+
+  # ─── Checkpoint & Commit ─────────────────────────────────────
+  checkpoint_commit:
+    name: "Full Checkpoint Protocol"
+    description: "14-step state validation, sync, and commit cycle"
+    trigger: manual
+    steps:
+      - id: conflicts_scan
+        tool: heady_conflicts_scan
+      - id: config_validate
+        tool: heady_config_validate
+        depends_on: [conflicts_scan]
+      - id: codelock_status
+        tool: heady_codelock_status
+        depends_on: [config_validate]
+      - id: security_scan
+        tool: heady_secrets_scan
+        depends_on: [codelock_status]
+      - id: ors_compute
+        tool: heady_ors_compute
+        depends_on: [security_scan]
+      - id: memory_consolidate
+        tool: heady_memory_consolidate
+        depends_on: [ors_compute]
+      - id: story_chapter
+        tool: heady_story_chapter
+        depends_on: [memory_consolidate]
+        params:
+          narrative: "Checkpoint completed successfully"
+      - id: audit_log
+        tool: heady_governance_audit
+        depends_on: [story_chapter]
+
+  # ─── Distillation Pipeline ──────────────────────────────────
+  distillation_pipeline:
+    name: "Skill Distillation Pipeline"
+    description: "Record → Filter → Synthesize → Optimize → Verify"
+    trigger: manual
+    steps:
+      - id: gather_traces
+        tool: heady_latent_log
+        params:
+          limit: 100
+      - id: autocontext_enrich
+        tool: heady_autocontext_enrich
+        depends_on: [gather_traces]
+      - id: pattern_capture
+        tool: heady_pattern_capture
+        depends_on: [autocontext_enrich]
+        params:
+          type: structural
+          name: "distillation-pattern"
+      - id: memory_store
+        tool: heady_memory_store
+        depends_on: [pattern_capture]
+        params:
+          type: procedural
+          tier: T2
+      - id: bus_notify
+        tool: heady_bus_publish
+        depends_on: [memory_store]
+        params:
+          channel: "distillation.complete"

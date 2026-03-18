@@ -1,0 +1,350 @@
+# HEADY_BRAND:BEGIN
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  HEADY SYSTEMS — Agent Registry                                ║
+# ║  ∞ SACRED GEOMETRY ∞  Autonomous Intelligent Agents            ║
+# ╚══════════════════════════════════════════════════════════════════╝
+# HEADY_BRAND:END
+
+version: "4.1.0"
+name: HeadyAgentRegistry
+description: >
+  Complete registry of all HeadyMCP autonomous agents. Each agent has
+  a defined persona, capabilities, tools, and communication protocols.
+  Agents operate within the Liquid Latent OS with CSL-gated autonomy.
+
+# ═══════════════════════════════════════════════════════════════════
+# AGENT DEFINITIONS
+# ═══════════════════════════════════════════════════════════════════
+
+agents:
+  # ─── HeadyBuddy — Primary AI Companion ───────────────────────
+  heady_buddy:
+    name: HeadyBuddy
+    role: "Primary AI companion — warm, precise, transparent"
+    autonomy: high
+    persona:
+      tone: "Warm but precise, knowledgeable but not condescending"
+      aesthetics: "Sacred Geometry — rounded, organic, breathing"
+      uncertainty: "Transparent — states confidence, explains gaps"
+      learning: "Acknowledges growth when new patterns learned"
+    tools:
+      - heady_autocontext_enrich
+      - heady_memory_recall
+      - heady_memory_store
+      - heady_pattern_capture
+      - heady_csl_route
+      - heady_bus_publish
+      - heady_story_chapter
+    csl_domains: [creative, intelligence, memory]
+    communication:
+      input: [MCP, HTTP, WebSocket]
+      output: [MCP, HTTP, WebSocket]
+    ports: [3310]
+
+  # ─── HeadyConductor — Master Orchestrator ────────────────────
+  heady_conductor:
+    name: HeadyConductor
+    role: "Master orchestrator — CSL-gated routing across 12 domains"
+    autonomy: critical
+    tools:
+      - heady_swarm_create
+      - heady_swarm_spawn_bee
+      - heady_swarm_dissolve
+      - heady_csl_route
+      - heady_pipeline_run
+      - heady_pipeline_advance
+      - heady_task_graph_execute
+      - heady_mesh_invoke
+      - heady_bus_publish
+    csl_domains: [orchestration]
+    pools:
+      hot: 34
+      warm: 21
+      cold: 13
+    communication:
+      input: [MCP, Event Bus, gRPC]
+      output: [Event Bus, gRPC]
+    ports: [3303]
+
+  # ─── HeadyBrain — Meta-Controller ────────────────────────────
+  heady_brain:
+    name: HeadyBrain
+    role: "Meta-controller — cognitive config authority, system prompts"
+    autonomy: high
+    tools:
+      - heady_autocontext_enrich
+      - heady_memory_recall
+      - heady_ors_compute
+      - heady_pattern_list
+      - heady_drift_detect
+      - heady_calibrate
+      - heady_brain_think
+    csl_domains: [intelligence]
+    communication:
+      input: [MCP, Event Bus]
+      output: [Event Bus, MCP]
+    ports: [3302]
+
+  # ─── HeadySoul — Decision Authority ──────────────────────────
+  heady_soul:
+    name: HeadySoul
+    role: "Ethical decision-making authority — can HALT any operation"
+    autonomy: critical
+    tools:
+      - heady_governance_enforce
+      - heady_governance_violations
+      - heady_rbac_check
+      - heady_csl_route
+      - heady_bus_publish
+    csl_domains: [security]
+    permissions: "Can HALT any operation. Override requires owner approval."
+    communication:
+      input: [Event Bus]
+      output: [Event Bus]
+
+  # ─── HeadyVinci — Learning Engine ───────────────────────────
+  heady_vinci:
+    name: HeadyVinci
+    role: "Pattern extraction, wisdom curation, continuous learning"
+    autonomy: high
+    tools:
+      - heady_pattern_capture
+      - heady_pattern_correlate
+      - heady_pattern_list
+      - heady_memory_store
+      - heady_memory_recall
+      - heady_autocontext_enrich
+      - heady_evolution_mutate
+      - heady_evolution_fitness
+    csl_domains: [learning]
+    communication:
+      input: [Event Bus]
+      output: [Event Bus, MCP]
+
+  # ─── HeadySims — Monte Carlo Simulator ──────────────────────
+  heady_sims:
+    name: HeadySims
+    role: "Monte Carlo simulation, success prediction, resource estimation"
+    autonomy: medium
+    tools:
+      - heady_montecarlo_simulate
+      - heady_montecarlo_history
+      - heady_cost_report_period
+      - heady_cost_budget
+      - heady_calibrate
+    csl_domains: [intelligence]
+    communication:
+      input: [Event Bus, MCP]
+      output: [Event Bus]
+
+  # ─── HeadyGuard — Security Sentinel ─────────────────────────
+  heady_guard:
+    name: HeadyGuard
+    role: "Security enforcement, secrets scanning, compliance auditing"
+    autonomy: high
+    tools:
+      - heady_secrets_scan
+      - heady_env_audit
+      - heady_deps_scan
+      - heady_codelock_status
+      - heady_codelock_detect
+      - heady_governance_enforce
+      - heady_governance_audit
+      - heady_rbac_check
+    csl_domains: [security, compliance]
+    communication:
+      input: [Event Bus, MCP]
+      output: [Event Bus, MCP]
+
+  # ─── HeadyMaestro — Workflow Orchestrator ───────────────────
+  heady_maestro:
+    name: HeadyMaestro
+    role: "Workflow execution, multi-step orchestration, parallel fanout"
+    autonomy: high
+    tools:
+      - heady_task_graph_execute
+      - heady_pipeline_run
+      - heady_pipeline_advance
+      - heady_pipeline_runs
+      - heady_swarm_create
+      - heady_bus_publish
+      - heady_mesh_invoke
+    csl_domains: [orchestration]
+    communication:
+      input: [MCP, Event Bus]
+      output: [Event Bus]
+
+  # ─── HeadyAtlas — Ecosystem Mapper ──────────────────────────
+  heady_atlas:
+    name: HeadyAtlas
+    role: "Ecosystem mapping, dependency analysis, cross-repo intelligence"
+    autonomy: medium
+    tools:
+      - heady_ecosystem_map
+      - heady_ecosystem_dependencies
+      - heady_ecosystem_communication
+      - heady_mesh_topology
+      - github_list_repos
+      - github_repo_info
+    csl_domains: [orchestration]
+    communication:
+      input: [MCP]
+      output: [MCP, Event Bus]
+
+  # ─── HeadyObserver — System Monitor ─────────────────────────
+  heady_observer:
+    name: HeadyObserver
+    role: "System monitoring, health federation, anomaly detection"
+    autonomy: high
+    tools:
+      - heady_mesh_health
+      - heady_mesh_topology
+      - heady_bus_stats
+      - heady_csl_metrics
+      - heady_ors_compute
+      - heady_ors_history
+      - heady_memory_stats
+      - heady_cost_budget
+    csl_domains: [self-awareness, performance]
+    communication:
+      input: [Event Bus]
+      output: [Event Bus, MCP]
+
+  # ─── HeadyPythia — Oracle & Predictor ───────────────────────
+  heady_pythia:
+    name: HeadyPythia
+    role: "Prediction engine, trend analysis, future state estimation"
+    autonomy: medium
+    tools:
+      - heady_montecarlo_simulate
+      - heady_pattern_list
+      - heady_drift_detect
+      - heady_autocontext_enrich
+      - heady_memory_recall
+      - heady_calibrate
+    csl_domains: [intelligence]
+    communication:
+      input: [Event Bus, MCP]
+      output: [Event Bus]
+
+  # ─── HeadyScribe — Documentation Agent ─────────────────────
+  heady_scribe:
+    name: HeadyScribe
+    role: "Auto-documentation, changelog generation, README updates"
+    autonomy: medium
+    tools:
+      - heady_story_start
+      - heady_story_chapter
+      - heady_story_complete
+      - heady_story_list
+      - heady_docs_freshness
+      - heady_code_stats
+      - heady_registry_list
+    csl_domains: [creative]
+    communication:
+      input: [Event Bus, MCP]
+      output: [MCP]
+
+  # ─── HeadyJanitor — Maintenance Agent ───────────────────────
+  heady_janitor:
+    name: HeadyJanitor
+    role: "Code cleanup, dead import removal, formatting, quickfixes"
+    autonomy: medium
+    tools:
+      - heady_quickfix
+      - heady_conflicts_scan
+      - heady_conflicts_resolve
+      - heady_memory_consolidate
+      - heady_codelock_snapshot
+    csl_domains: [code]
+    communication:
+      input: [Event Bus, MCP]
+      output: [Event Bus]
+
+  # ─── HeadyEvolver — Evolution Specialist ────────────────────
+  heady_evolver:
+    name: HeadyEvolver
+    role: "Controlled mutation, tournament selection, canary deployment"
+    autonomy: medium
+    tools:
+      - heady_evolution_mutate
+      - heady_evolution_fitness
+      - heady_evolution_canary
+      - heady_evolution_status
+      - heady_montecarlo_simulate
+      - heady_calibrate
+    csl_domains: [evolution]
+    communication:
+      input: [Event Bus]
+      output: [Event Bus]
+    constraints: "Canary rollout: 1%→5%→20%→100%. Never mutates security/compliance."
+
+  # ─── HeadyTranslator — Protocol Bridge ─────────────────────
+  heady_translator:
+    name: HeadyTranslator
+    role: "Cross-protocol translation — MCP ↔ HTTP ↔ WebSocket ↔ gRPC ↔ UDP ↔ MIDI"
+    autonomy: high
+    tools:
+      - heady_translator_translate
+      - heady_translator_decode
+      - heady_translator_bridge
+      - heady_translator_status
+      - heady_translator_adapters
+    csl_domains: [orchestration]
+    communication:
+      input: [MCP, HTTP, WebSocket, UDP, MIDI, TCP]
+      output: [MCP, HTTP, WebSocket, UDP, MIDI, TCP]
+
+  # ─── HeadyCostController — Budget Manager ──────────────────
+  heady_cost_controller:
+    name: HeadyCostController
+    role: "Budget enforcement, cost optimization, resource allocation"
+    autonomy: medium
+    tools:
+      - heady_cost_record
+      - heady_cost_budget
+      - heady_cost_report_period
+      - heady_governance_enforce
+      - heady_bus_publish
+    csl_domains: [cost]
+    communication:
+      input: [Event Bus]
+      output: [Event Bus, MCP]
+
+# ═══════════════════════════════════════════════════════════════════
+# AGENT COMMUNICATION TOPOLOGY
+# ═══════════════════════════════════════════════════════════════════
+
+topology:
+  center: heady_soul
+  inner_ring:
+    - heady_conductor
+    - heady_brain
+    - heady_vinci
+  middle_ring:
+    - heady_buddy
+    - heady_maestro
+    - heady_sims
+    - heady_guard
+    - heady_observer
+  outer_ring:
+    - heady_atlas
+    - heady_pythia
+    - heady_scribe
+    - heady_janitor
+    - heady_evolver
+    - heady_translator
+    - heady_cost_controller
+
+# ═══════════════════════════════════════════════════════════════════
+# AGENT COORDINATION PROTOCOLS
+# ═══════════════════════════════════════════════════════════════════
+
+coordination:
+  message_bus: "HeadyMessageBus — event-driven with correlation IDs"
+  csl_gating: "All routing decisions pass through CSL confidence gates"
+  pool_routing: "Hot(34%) / Warm(21%) / Cold(13%) / Reserve(8%) / Governance(5%)"
+  backoff: "φ^attempt × base ms (jitter ±38.2%)"
+  consensus: "Consensus superposition — vector mean + affinity scoring"
+  escalation: "Any agent can escalate to HeadySoul for ethical review"
+  halt_authority: "HeadySoul can HALT any operation system-wide"

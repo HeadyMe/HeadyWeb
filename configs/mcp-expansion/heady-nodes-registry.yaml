@@ -1,0 +1,338 @@
+# HEADY_BRAND:BEGIN
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  HEADY SYSTEMS — Extended Liquid Nodes Registry                ║
+# ║  ∞ SACRED GEOMETRY ∞  Dynamic Connectors · Flow Processors    ║
+# ╚══════════════════════════════════════════════════════════════════╝
+# HEADY_BRAND:END
+
+version: "4.1.0"
+name: HeadyExtendedNodeRegistry
+description: >
+  Extended liquid node definitions beyond the core node-registry.
+  Each node is a dynamic connector that flows data between
+  Heady subsystems and external platforms.
+
+# ═══════════════════════════════════════════════════════════════════
+# PROCESSING NODES — Internal data transformation & routing
+# ═══════════════════════════════════════════════════════════════════
+
+processing_nodes:
+  # ─── Vector Router Node ──────────────────────────────────────
+  - id: vector-router-node
+    name: VectorRouterNode
+    type: processor
+    description: "Routes data based on vector similarity to destination embeddings"
+    inputs: [text, vector, metadata]
+    outputs: [routed_destination, confidence_score]
+    csl_domain: intelligence
+    phi_params:
+      similarity_threshold: 0.809  # CSL.MEDIUM
+      max_candidates: 13  # FIB[7]
+      decay_factor: 0.618  # PSI
+
+  # ─── CSL Gate Node ──────────────────────────────────────────
+  - id: csl-gate-node
+    name: CSLGateNode
+    type: filter
+    description: "Confidence-gated passthrough — blocks below threshold"
+    inputs: [data, confidence_score]
+    outputs: [passed_data, blocked_data, gate_result]
+    thresholds:
+      minimum: 0.500
+      low: 0.691
+      medium: 0.809
+      high: 0.882
+      critical: 0.927
+
+  # ─── Phi Scaler Node ───────────────────────────────────────
+  - id: phi-scaler-node
+    name: PhiScalerNode
+    type: transformer
+    description: "Applies phi-scaling to numeric values for golden ratio distribution"
+    inputs: [values, scale_type]
+    outputs: [scaled_values]
+    operations:
+      - phi_multiply: "value × 1.618"
+      - psi_multiply: "value × 0.618"
+      - fib_quantize: "snap to nearest Fibonacci number"
+      - phi_distribute: "distribute across phi-ratio buckets"
+
+  # ─── Consensus Aggregator Node ─────────────────────────────
+  - id: consensus-aggregator-node
+    name: ConsensusAggregatorNode
+    type: aggregator
+    description: "Combines multiple bee/swarm outputs into consensus result"
+    inputs: [results_array]
+    outputs: [consensus_result, agreement_score, outliers]
+    strategies:
+      - consensus_superposition: "Vector mean of all results"
+      - majority_vote: "Simple majority selection"
+      - weighted_rank: "Priority-weighted ranking"
+      - phi_blend: "φ-weighted interpolation between top-2"
+
+  # ─── Correlation Detector Node ──────────────────────────────
+  - id: correlation-detector-node
+    name: CorrelationDetectorNode
+    type: analyzer
+    description: "Detects correlations between pattern streams"
+    inputs: [pattern_stream_a, pattern_stream_b]
+    outputs: [correlation_strength, phi_score, significance]
+    phi_params:
+      min_correlation: 0.500
+      significance_threshold: 0.809
+
+  # ─── Temporal Context Node ─────────────────────────────────
+  - id: temporal-context-node
+    name: TemporalContextNode
+    type: enricher
+    description: "Adds temporal context — recency, frequency, trending"
+    inputs: [data, timestamp_field]
+    outputs: [enriched_data]
+    windows:
+      hot: "last 34 minutes"
+      warm: "last 21 hours"
+      cold: "last 13 days"
+
+  # ─── Embedding Generator Node ──────────────────────────────
+  - id: embedding-generator-node
+    name: EmbeddingGeneratorNode
+    type: transformer
+    description: "Generates 384D vector embeddings from text using multi-gram hashing"
+    inputs: [text]
+    outputs: [vector_384d, vector_128d]
+    dimensions:
+      high: 384
+      medium: 128
+      low: 64
+
+# ═══════════════════════════════════════════════════════════════════
+# CONNECTOR NODES — External service integration
+# ═══════════════════════════════════════════════════════════════════
+
+connector_nodes:
+  # ─── Anthropic API Node ────────────────────────────────────
+  - id: anthropic-api-node
+    name: AnthropicAPINode
+    type: connector
+    description: "Claude API connector — messages, embeddings, tool use"
+    env_key: ANTHROPIC_API_KEY
+    endpoints:
+      messages: "https://api.anthropic.com/v1/messages"
+      embeddings: "https://api.anthropic.com/v1/embeddings"
+    models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+
+  # ─── OpenAI API Node ──────────────────────────────────────
+  - id: openai-api-node
+    name: OpenAIAPINode
+    type: connector
+    description: "OpenAI API connector — chat completions, embeddings, DALL-E"
+    env_key: OPENAI_API_KEY
+    endpoints:
+      chat: "https://api.openai.com/v1/chat/completions"
+      embeddings: "https://api.openai.com/v1/embeddings"
+      images: "https://api.openai.com/v1/images/generations"
+
+  # ─── Google AI Node ───────────────────────────────────────
+  - id: google-ai-node
+    name: GoogleAINode
+    type: connector
+    description: "Google AI Studio + Vertex AI connector"
+    env_key: GOOGLE_AI_API_KEY
+    endpoints:
+      generate: "https://generativelanguage.googleapis.com/v1beta/models"
+      vertex: "https://{region}-aiplatform.googleapis.com/v1"
+
+  # ─── Groq API Node ───────────────────────────────────────
+  - id: groq-api-node
+    name: GroqAPINode
+    type: connector
+    description: "Groq ultra-fast inference connector"
+    env_key: GROQ_API_KEY
+    endpoint: "https://api.groq.com/openai/v1/chat/completions"
+
+  # ─── Upstash Redis Node ──────────────────────────────────
+  - id: upstash-redis-node
+    name: UpstashRedisNode
+    type: connector
+    description: "Upstash Redis — T0 working memory cache"
+    env_key: REDIS_URL
+    operations: [get, set, del, scan, pipeline, pub, sub]
+
+  # ─── PostgreSQL/pgvector Node ────────────────────────────
+  - id: pgvector-node
+    name: PgVectorNode
+    type: connector
+    description: "PostgreSQL + pgvector — T2 long-term memory with HNSW indexing"
+    env_key: DATABASE_URL
+    hnsw_params:
+      m: 21
+      ef_construction: 89
+      dimensions: 384
+
+  # ─── Cloudflare Workers Node ─────────────────────────────
+  - id: cloudflare-workers-node
+    name: CloudflareWorkersNode
+    type: connector
+    description: "Cloudflare Workers — edge compute, KV, Vectorize, Durable Objects"
+    env_key: CLOUDFLARE_API_TOKEN
+    services: [Workers, Pages, KV, Vectorize, "Durable Objects", "Workers AI"]
+
+  # ─── Firebase Auth Node ─────────────────────────────────
+  - id: firebase-auth-node
+    name: FirebaseAuthNode
+    type: connector
+    description: "Firebase Authentication — user identity, JWT tokens"
+    env_key: FIREBASE_PROJECT_ID
+
+  # ─── GitHub API Node ────────────────────────────────────
+  - id: github-api-node
+    name: GitHubAPINode
+    type: connector
+    description: "GitHub API — repos, issues, PRs, Actions, code search"
+    env_key: GITHUB_TOKEN
+    orgs: [HeadyAI, HeadyMe, HeadySystems]
+
+  # ─── Discord Bot Node ──────────────────────────────────
+  - id: discord-bot-node
+    name: DiscordBotNode
+    type: connector
+    description: "Discord bot — messages, embeds, slash commands, threads"
+    env_key: DISCORD_BOT_TOKEN
+
+  # ─── Slack Bot Node ────────────────────────────────────
+  - id: slack-bot-node
+    name: SlackBotNode
+    type: connector
+    description: "Slack bot — messages, blocks, threads, app mentions"
+    env_key: SLACK_BOT_TOKEN
+
+  # ─── Google Drive / Colab Node ─────────────────────────
+  - id: colab-node
+    name: ColabNode
+    type: connector
+    description: "Google Colab — notebook operations via Drive API"
+    env_key: GCLOUD_ACCESS_TOKEN
+    tunnels:
+      vector: "vector.headyos.com"
+      llm: "llm.headyos.com"
+      train: "train.headyos.com"
+
+  # ─── Render Deploy Node ───────────────────────────────
+  - id: render-deploy-node
+    name: RenderDeployNode
+    type: connector
+    description: "Render — web service, background worker, cron job deployment"
+    env_key: RENDER_API_KEY
+
+  # ─── Cloud Run Node ──────────────────────────────────
+  - id: cloud-run-node
+    name: CloudRunNode
+    type: connector
+    description: "Google Cloud Run — container deployment, scaling, traffic split"
+    env_key: GCLOUD_ACCESS_TOKEN
+    project: "gen-lang-client-0920560496"
+    region: "us-east1"
+
+# ═══════════════════════════════════════════════════════════════════
+# FLOW NODES — Data pipeline stages
+# ═══════════════════════════════════════════════════════════════════
+
+flow_nodes:
+  # ─── Input Normalizer ──────────────────────────────────────
+  - id: input-normalizer-node
+    name: InputNormalizerNode
+    type: flow
+    description: "Normalizes input from any protocol to canonical HeadyMessage format"
+    position: entry
+    accepts: [MCP, HTTP, WebSocket, UDP, MIDI, raw_text]
+
+  # ─── Intent Classifier ────────────────────────────────────
+  - id: intent-classifier-node
+    name: IntentClassifierNode
+    type: flow
+    description: "Classifies user intent using CSL domain scoring"
+    position: early
+    outputs: [intent, confidence, domain, suggested_pool]
+    csl_domains: all
+
+  # ─── Response Shaper ──────────────────────────────────────
+  - id: response-shaper-node
+    name: ResponseShaperNode
+    type: flow
+    description: "Shapes final response — format, persona, branding, Sacred Geometry aesthetics"
+    position: exit
+    persona_integration: true
+    branding: "Sacred Geometry — rounded, organic, breathing"
+
+  # ─── Error Recovery Node ──────────────────────────────────
+  - id: error-recovery-node
+    name: ErrorRecoveryNode
+    type: flow
+    description: "5-whys RCA, circuit breaker integration, graceful degradation"
+    position: any
+    strategies:
+      - retry_with_phi_backoff: "φ^attempt × base_ms"
+      - fallback_chain: "try primary → secondary → cache → default"
+      - circuit_break: "open after FIB[5] failures"
+      - graceful_degrade: "reduce quality, maintain availability"
+
+  # ─── Cache Optimizer Node ──────────────────────────────────
+  - id: cache-optimizer-node
+    name: CacheOptimizerNode
+    type: flow
+    description: "Multi-tier cache — L1(hot)/L2(warm)/L3(cold) with Fibonacci TTLs"
+    ttls:
+      L1: "89 seconds"
+      L2: "377 seconds"
+      L3: "1597 seconds"
+
+  # ─── Cost Tally Node ──────────────────────────────────────
+  - id: cost-tally-node
+    name: CostTallyNode
+    type: flow
+    description: "Tallies cost per request — tokens, API calls, compute time"
+    position: late
+    integration: heady_cost_record
+
+  # ─── Governance Log Node ──────────────────────────────────
+  - id: governance-log-node
+    name: GovernanceLogNode
+    type: flow
+    description: "Tamper-evident audit logging with hash chains"
+    position: late
+    integration: heady_governance_audit
+
+# ═══════════════════════════════════════════════════════════════════
+# NODE WIRING PATTERNS
+# ═══════════════════════════════════════════════════════════════════
+
+wiring_patterns:
+  full_pipeline:
+    description: "Complete 21-stage HCFullPipeline v7 node chain"
+    chain:
+      - input-normalizer-node
+      - firebase-auth-node
+      - intent-classifier-node
+      - temporal-context-node
+      - vector-router-node
+      - csl-gate-node
+      - anthropic-api-node  # or openai/google/groq via battle
+      - consensus-aggregator-node
+      - embedding-generator-node
+      - correlation-detector-node
+      - response-shaper-node
+      - csl-gate-node
+      - governance-log-node
+      - cost-tally-node
+      - cache-optimizer-node
+
+  fast_pipeline:
+    description: "7-stage fast path for high-confidence requests"
+    chain:
+      - input-normalizer-node
+      - intent-classifier-node
+      - vector-router-node
+      - cache-optimizer-node
+      - response-shaper-node
+      - cost-tally-node
+      - governance-log-node
