@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://headyweb.com/sitemap.xml
