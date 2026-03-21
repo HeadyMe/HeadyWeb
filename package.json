@@ -2,6 +2,7 @@
   "name": "headyweb",
   "version": "1.0.0",
   "description": "HeadyWeb — A Chromium-based browser by Heady Systems. Faster, smarter, and more private than Chrome or Comet.",
+  "type": "module",
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",
