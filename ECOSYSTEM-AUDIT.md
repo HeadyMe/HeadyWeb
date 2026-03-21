@@ -1,351 +1,421 @@
-# Heady GitHub Ecosystem Deep Research Audit
+# Heady GitHub Ecosystem Deep Research Audit v2.0
 
-> **Date**: 2026-03-21
-> **Scope**: HeadySystems, HeadyMe, HeadyAI, HeadyConnection organizations
+> **Date**: 2026-03-21 (Updated with full deep scan)
+> **Scope**: HeadySystems, HeadyMe, HeadyAI, HeadyConnection — **75 repos scanned**
 > **Branch**: `claude/github-ecosystem-research-XuL9T`
+> **Scan Method**: Automated deep scan of every repo — git history, file structure, secrets, code quality
 
 ---
 
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
-2. [Repository Inventory](#repository-inventory)
-3. [Architecture Map](#architecture-map)
+2. [Ecosystem Statistics](#ecosystem-statistics)
+3. [Repository Classification](#repository-classification)
 4. [Critical Findings](#critical-findings)
 5. [Security Assessment](#security-assessment)
 6. [CI/CD Maturity](#cicd-maturity)
-7. [Liquid Architecture Design](#liquid-architecture-design)
-8. [Content Playbooks](#content-playbooks)
-9. [Open Source Recommendations](#open-source-recommendations)
+7. [Architecture Map](#architecture-map)
+8. [Duplication Analysis](#duplication-analysis)
+9. [Org Governance](#org-governance)
 10. [Remediation Roadmap](#remediation-roadmap)
 
 ---
 
 ## Executive Summary
 
-The Heady ecosystem is already "multi-surface" — spanning a core monorepo, edge workflows, IDE/MCP tooling, and 70+ component repos across four GitHub organizations. The fastest path to a resilient liquid architecture is to:
+The Heady ecosystem spans **75 repositories** across **4 GitHub organizations**. After deep-scanning every repo, the ecosystem breaks down into:
 
-- **Eliminate repo duplication** and merge-conflict residue first
-- **Formalize secrets/CI/security gates** (OWASP-aligned)
-- **Treat KV as distributed cache** (eventually consistent) and **Neon as truth**
-- **Adopt open standards**: OpenTelemetry, CodeQL, Trivy, OWASP Dependency-Check, pgvector, MCP
-- **Scale content** through repeatable content factories tied to actual system surfaces
+- **4 monorepos** (20K-46K files each) that contain the actual product
+- **~55 scaffold/placeholder sites** sharing identical Node.js static-server templates
+- **8 projection/core repos** with deploy workflows but minimal code
+- **8 specialized repos** (docs, templates, context, agents)
 
-This makes each component replaceable ("liquid"), but the contracts (APIs, MCP tools, content schemas, CI gates) remain stable.
-
----
-
-## Repository Inventory
-
-### Specified Repositories — High-Level Status
-
-| Repository | Owner | Visibility | Default Branch | Primary Domain | Critical Flags |
-|---|---|---|---|---|---|
-| HeadySystems/ai-workflow-engine | HeadySystems | Public | main | Edge AI workflow runner (Cloudflare Workers) | KV consistency needs explicit handling; needs auth + schema hardening |
-| HeadySystems/CascadeProjects | HeadySystems | Private | main | Project aggregation | Documentation coverage unspecified |
-| HeadySystems/Heady | HeadySystems | Public | main | "Heady" system / manager | **Merge conflict markers present** — breaks builds |
-| HeadySystems/heady-automation-ide | HeadySystems | Private | main | Automation IDE + MCP server | **package.json malformed**; license metadata mismatch |
-| HeadySystems/Heady-Main | HeadySystems | Public | main | Environment snapshot / deploy channel | README duplicated; merge conflicts indicated |
-| HeadySystems/Heady-pre-production | HeadySystems | Public | main | Pre-prod packaging channel | More buildable lineage vs conflicted env clones |
-| HeadySystems/Heady-Staging | HeadySystems | Public | main | Environment snapshot / deploy channel | README duplication + merge conflicts |
-| HeadySystems/Heady-Testing | HeadySystems | Public | main | Environment snapshot / deploy channel | README duplication + merge conflicts |
-| HeadySystems/HeadyMe | HeadySystems | Private | main | Minimal / placeholder | README minimal |
-| HeadySystems/main | HeadySystems | Public | main | Legacy or demo bundle | Config references incomplete |
-| HeadySystems/HeadyMonorepo | HeadySystems | Private | main | Consolidated core (Node + Python + frontend) | Shell execution risk in Python builder |
-| HeadySystems/Projects | HeadySystems | Private | main | Project aggregation | README unspecified |
-| HeadySystems/sandbox | HeadySystems | Public | main | Experiments / monorepo workspace | CI vs package-manager mismatch (pnpm declared; npm in CI) |
-| HeadySystems/sandbox-pre-production | HeadySystems | Public | main | Pre-prod sandbox packaging | README exists; deeper structure unspecified |
-| HeadyMe/Heady-Staging | HeadyMe | Private | main | HeadyMe staging bundle | Similar to env clones |
-
-### Additional Repositories (Listed Only — Not Analyzed)
-
-**HeadySystems**: headybuddy-web, HeadyEcosystem, HeadyAutoContext
-
-**HeadyMe** (representative, non-exhaustive):
-- Core repos: headyapi-core, headybot-core, headybuddy-core, headyconnection-core, headyme-core, headymcp-core, headyos-core, headyio-core, headysystems-core
-- Product repos: HeadyWeb, HeadyBuddy, heady-docs, heady-discord, heady-slack, heady-desktop, heady-mobile, heady-chrome, heady-jetbrains, heady-vscode, heady-github-integration
-- Infrastructure: heady-production, heady-montecarlo, heady-kinetics, heady-maestro, heady-observer, heady-sentinel, heady-traces, heady-logs, heady-metrics, heady-patterns
-- Sites: headyme-com, headyio-com, headymcp-com, headysystems-com, headybuddy-org, headyconnection-org
-- Templates: template-heady-ui, template-mcp-server, template-swarm-bee
-
-**HeadyAI**: .github, Heady, Heady-Testing, Heady-Staging, Sandbox
-
-**HeadyConnection**: heady-clone, Heady-Main, Heady-Testing
+**Top Priority Actions:**
+1. **ROTATE** hardcoded Cloudflare API token in `latent-core-dev` (CRITICAL)
+2. **FIX** merge conflicts in Sandbox README, Heady-Main-1 README (3+ files)
+3. **GITIGNORE** `.wrangler/cache/` in `headyme` (Cloudflare account ID exposed)
+4. **CONSOLIDATE** 55+ scaffold repos into a single template-driven deployment
+5. **ADD** CI/CD pipelines — only 12 of 75 repos have any GitHub Actions workflows
 
 ---
 
-## Architecture Map
+## Ecosystem Statistics
 
-### Three Centers of Gravity
+| Metric | Value |
+|--------|-------|
+| **Total repos** | 75 |
+| **Organizations** | 4 (HeadyAI, HeadyMe, HeadyConnection, HeadySystems) |
+| **Total files (deduplicated)** | ~167,000 |
+| **Repos with CI/CD workflows** | 12 (16%) |
+| **Repos with Dockerfile** | 62 (83%) |
+| **Repos with .env.example** | 7 (9%) |
+| **Repos with tests** | 4 (5%) |
+| **Repos with .gitignore** | 5 (7%) |
+| **Repos with LICENSE** | 4 (5%) |
+| **Total TODO/FIXMEs** | ~1,100+ |
+| **Hardcoded secrets found** | 1 CRITICAL (Cloudflare token), 1 WARNING (archived LiteLLM key) |
+| **Merge conflicts committed** | 3 repos (Sandbox, Heady-Main-1, heady-clone) |
+| **ECOSYSTEM-AUDIT.md deployed** | 75/75 (100%) |
+| **remediation-tracker.yaml deployed** | 75/75 (100%) |
 
-1. **Consolidated Core / Monorepo** (`HeadySystems/HeadyMonorepo`) — Admin backend + Python automation modules
-2. **Edge-First Workflow Runner** (`HeadySystems/ai-workflow-engine`) — Cloudflare Worker with KV-based workflow storage/execution
-3. **Tooling/IDE + Agent Integration** (`HeadySystems/heady-automation-ide`) — MCP server concept (currently operationally inconsistent)
+---
 
-### Cross-Repo Interaction Map
+## Repository Classification
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Cloudflare Edge Layer                       │
-│  ┌──────────────────────┐  ┌───────────────────┐            │
-│  │ ai-workflow-engine    │  │ Workers KV         │            │
-│  │ (API + workflow exec) │  │ (read-heavy config)│            │
-│  └──────────┬───────────┘  └───────────────────┘            │
-└─────────────┼───────────────────────────────────────────────┘
-              │
-┌─────────────┼───────────────────────────────────────────────┐
-│             ▼         Core Orchestration                     │
-│  ┌──────────────────────┐  ┌───────────────────┐            │
-│  │ HeadyMonorepo        │  │ Python automation  │            │
-│  │ (Admin/API + orch)   │──│ (builder/conductor)│            │
-│  └──────────────────────┘  └───────────────────┘            │
-└─────────────────────────────────────────────────────────────┘
-              │
-┌─────────────┼───────────────────────────────────────────────┐
-│             ▼            State + Memory                      │
-│  ┌────────────┐  ┌──────────┐  ┌──────────────┐            │
-│  │ Neon PG    │  │ Upstash  │  │ pgvector     │            │
-│  │ (truth)    │  │ (queues) │  │ (vectors)    │            │
-│  └────────────┘  └──────────┘  └──────────────┘            │
-└─────────────────────────────────────────────────────────────┘
-              │
-┌─────────────┼───────────────────────────────────────────────┐
-│             ▼         AI Compute                             │
-│  ┌────────────────┐  ┌──────────────┐                       │
-│  │ Vertex AI      │  │ AI Studio    │                       │
-│  │ (prod endpoints│  │ (prototyping)│                       │
-│  └────────────────┘  └──────────────┘                       │
-└─────────────────────────────────────────────────────────────┘
-              │
-┌─────────────┼───────────────────────────────────────────────┐
-│             ▼        Observability                            │
-│  ┌────────────────────────────────┐                          │
-│  │ Sentry + OpenTelemetry         │                          │
-│  │ (traces, metrics, logs, errors)│                          │
-│  └────────────────────────────────┘                          │
-└─────────────────────────────────────────────────────────────┘
-```
+### Tier 1: Monorepos (Active Product Code)
 
-### Key Technical Constraints
+| Repo | Org | Files | Languages | Workflows | TODOs | Health |
+|------|-----|-------|-----------|-----------|-------|--------|
+| HeadyAI/Heady | HeadyAI | 20,035 | JS/TS/PY/HTML | 28 | 244 | GOOD |
+| HeadyConnection/Heady-Testing | HeadyConnection | 45,990 | JS/TS/PY/Java | 37 | 232 | GOOD |
+| HeadyMe/Heady-Staging | HeadyMe | 20,001 | JS/TS/PY/HTML | 28 | 258 | GOOD |
+| HeadyAI/Sandbox | HeadyAI | 15,002 | JS/TS/PY/HTML | 44 | 214 | NEEDS FIX |
 
-- **Workers KV is eventually consistent** — changes may take up to 60 seconds to propagate. Use for distribution/cache only, NOT authoritative workflow state.
-- **Credentialed CORS** — browsers block `Access-Control-Allow-Origin: *` with credentials. Must use explicit origins.
+### Tier 1B: Monorepo Clones (Near-Identical to Tier 1)
+
+| Repo | Org | Files | Workflows | TODOs | Health |
+|------|-----|-------|-----------|-------|--------|
+| HeadyConnection/Heady-Main | HeadyConnection | 20,038 | 30 | 248 | NEEDS FIX |
+| HeadyMe/Heady-Main-1 | HeadyMe | 46,035 | 2 | 237 | CRITICAL |
+| HeadyMe/heady-production | HeadyMe | 20,035 | 28 | 248 | NEEDS FIX |
+| HeadySystems/sandbox | HeadySystems | 8,039 | 31 | 75 | GOOD |
+
+### Tier 2: Enterprise/Specialized Repos
+
+| Repo | Org | Files | Purpose | Health |
+|------|-----|-------|---------|--------|
+| HeadyMe/latent-core-dev | HeadyMe | 1,023 | Enterprise Hub, projections | CRITICAL (secrets) |
+| HeadyConnection/heady-clone | HeadyConnection | 4,769 | Full monorepo clone | NEEDS FIX |
+| HeadySystems/HeadyAutoContext | HeadySystems | 56 | AI agent context packages | GOOD |
+| HeadyMe/heady-docs | HeadyMe | 22 | Documentation hub, patents | FAIR |
+| HeadyMe/HeadyBuddy | HeadyMe | 29 | NanoClaw/OpenClaw agents | FAIR |
+| HeadyMe/HeadyWeb | HeadyMe | 19 | Production micro-frontend | FAIR |
+
+### Tier 3: Projection/Core Repos (Deploy Scaffolds with CI)
+
+8 repos following the pattern `{name}-core` with `deploy.yml` workflow + `site-config.json`:
+headyapi-core, headyme-core, headyos-core, headybuddy-core, headybot-core, headyio-core, headymcp-core, headysystems-core, headyconnection-core
+
+### Tier 4: Static Site Scaffolds (Identical Template)
+
+**~50 repos** sharing this exact structure:
+- `server.js` (~210 lines, Node.js HTTP server, API proxy, gzip, security headers)
+- `dist/index.html` (branded landing page, only title/description differs)
+- `Dockerfile` (node:22-alpine, healthcheck on :8080/health)
+- `package.json` (zero dependencies)
+- No CI/CD, no tests, no .gitignore, no lockfile
+
+These include all integration repos (heady-chrome, heady-discord, heady-slack, heady-vscode, heady-jetbrains, heady-mobile, heady-desktop, heady-github-integration, heady-jules, heady-buddy-portal, heady-builder), all domain sites (-com variants), infrastructure placeholders (heady-atlas, heady-critique, heady-imagine, heady-kinetics, heady-maestro, heady-observer, heady-sentinel, etc.), and utility repos.
+
+### Tier 5: Empty/Minimal Repos
+
+| Repo | Files | Issue |
+|------|-------|-------|
+| HeadySystems/HeadyEcosystem | 2 | Only audit files, no README |
+| HeadyMe/1ime1 | 16 | Missing README entirely |
+| HeadyMe/ableton-edge-production | 3 | Only audit files + README |
+| HeadyMe/headymcp-production | 3 | Only audit files + minimal README |
+| HeadyMe/headysystems-production | 6 | Minimal production target |
 
 ---
 
 ## Critical Findings
 
-### Stop-the-Line Issues
+### CRITICAL: Hardcoded Cloudflare API Token
 
-#### 1. Merge Conflict Markers in Production Files
-- **Repo**: `HeadySystems/Heady` (README, heady-manager.js)
-- **Impact**: Breaks builds, undermines trust
-- **Replicated**: Likely across Main/Staging/Testing environment clones
-- **Priority**: IMMEDIATE
+- **Repo**: `HeadyMe/latent-core-dev`
+- **Files**: `scripts/dns-update.js:2`, `scripts/dns-check.js:2`
+- **Token**: `VGNo4jwin3V6eFO0HpGGYUyn2iWFM6JpkPfdIqUa`
+- **Zone ID**: `d71262d0faa509f890fd5fea413c39bc`
+- **Action Required**: ROTATE TOKEN IMMEDIATELY, replace with env var reference
 
-#### 2. Malformed Package Metadata
-- **Repo**: `HeadySystems/heady-automation-ide`
-- **Impact**: `npm install` fails; tooling non-functional
-- **Additional**: License metadata (MIT in package.json) conflicts with Apache-2.0 in LICENSE file
-- **Priority**: IMMEDIATE
+### CRITICAL: Merge Conflicts in Production READMEs
 
-#### 3. Shell Execution Risk
-- **Repo**: `HeadySystems/HeadyMonorepo` (Python builder)
-- **Impact**: Maps to OWASP Injection + Insecure Design if any command input is user-influenced
-- **Priority**: HIGH
+| Repo | File | Conflict Blocks |
+|------|------|-----------------|
+| HeadyAI/Sandbox | README.md | 5 (`<<<<<<< HEAD` / `>>>>>>> a3d7d06c`) |
+| HeadyAI/Sandbox | docs/security_ci_memo.md | Conflict markers present |
+| HeadyAI/Sandbox | docs/docs_ops_memo.md | Conflict markers present |
+| HeadyMe/Heady-Main-1 | README.md | 4+ conflict blocks |
+| HeadyConnection/heady-clone | README.md | Merge conflict markers |
 
-#### 4. CI/Package Manager Mismatch
-- **Repo**: `HeadySystems/sandbox`
-- **Impact**: pnpm declared as package manager but npm used in CI — non-reproducible builds
-- **Priority**: HIGH
+### WARNING: Cloudflare Account ID Committed
+
+- **Repo**: `HeadyMe/headyme`
+- **File**: `.wrangler/cache/wrangler-account.json`
+- **Content**: Account ID `8b1fa38f282c691423c6399247d53323`
+- **Action**: Add `.wrangler/` to `.gitignore`
+
+### WARNING: Suspicious Archived API Key
+
+- **Repos**: Heady-Main, Heady-Main-1, heady-production
+- **File**: `_archive/configs/infrastructure/cloud/cmd-center-litellm.yaml`
+- **Key**: `sk-hive-node-01` — verify if placeholder or real, rotate if real
+
+### WARNING: CORS Wildcard on All Scaffold Sites
+
+- **Affected**: ~50 repos with identical `server.js`
+- **Issue**: `Access-Control-Allow-Origin: *` — acceptable for static sites, risky if API proxying is enabled
+- **OWASP**: A05:2021 Security Misconfiguration
 
 ---
 
 ## Security Assessment
 
-### OWASP Top 10 Mapping
+### OWASP Top 10 Mapping (Updated)
 
-| OWASP Category | Finding | Repos Affected |
-|---|---|---|
-| A03:2021 Injection | Shell execution in Python builder | HeadyMonorepo |
-| A05:2021 Security Misconfiguration | CORS wildcard risk, merge conflicts shipped | Heady, ai-workflow-engine |
-| A06:2021 Vulnerable/Outdated Components | No SCA scanning, lockfile gaps | Multiple |
-| A07:2021 Identification/Auth Failures | No auth patterns at edge | ai-workflow-engine |
-| A08:2021 Software/Data Integrity Failures | No CI quality gates, malformed packages | heady-automation-ide, sandbox |
-| A09:2021 Security Logging/Monitoring | No observability fabric | All |
+| OWASP Category | Finding | Severity | Repos |
+|---|---|---|---|
+| A01:2021 Broken Access Control | Hardcoded Cloudflare token grants DNS control | CRITICAL | latent-core-dev |
+| A03:2021 Injection | Shell execution in Python builder | HIGH | Heady monorepos |
+| A05:2021 Security Misconfiguration | CORS wildcard on all scaffolds; merge conflicts shipped | MEDIUM | 50+ repos |
+| A06:2021 Vulnerable Components | No SCA scanning; zero lockfiles in scaffolds | HIGH | 50+ repos |
+| A07:2021 Auth Failures | No auth on scaffold API proxies | MEDIUM | 50+ repos |
+| A08:2021 Integrity Failures | No CI gates on 63 of 75 repos | HIGH | 63 repos |
+| A09:2021 Logging/Monitoring | No observability in scaffolds | LOW | 50+ repos |
 
-### Recommendations
+### Secrets Scan Summary
 
-1. Enable **Dependabot security updates** across all repos
-2. Add **CodeQL scanning** (keep action versions current per GitHub deprecation schedules)
-3. Add **Trivy** for container/IaC scanning
-4. Add **OWASP Dependency-Check** for SCA in CI
-5. Use **GitHub OIDC** for cloud deploy auth (eliminate long-lived secrets)
-6. Enable **secret scanning** on all repositories
+| Type | Status | Location |
+|------|--------|----------|
+| Cloudflare API Token | LIVE — ROTATE | latent-core-dev/scripts/ |
+| Cloudflare Account ID | COMMITTED | headyme/.wrangler/cache/ |
+| LiteLLM API Key | ARCHIVED — VERIFY | _archive/ in 3 monorepos |
+| AWS AKIA Test Keys | TEST FIXTURES (safe) | test-zero-trust.js in monorepos |
+| Helm Passwords | PLACEHOLDERS (safe) | `REPLACE_IN_CI_SECRETS` |
+| Auth Engine Tokens | GENERATED DUMMIES (safe) | `user_token_` + Date.now() |
 
 ---
 
 ## CI/CD Maturity
 
-### Current State
+### Coverage by Tier
 
-| Repo | CI Workflow | Lockfile | Testing Framework | Notes |
-|---|---|---|---|---|
-| HeadySystems/Heady | Yes | Yes (package-lock) | Unspecified | Merge conflicts prevent green builds |
-| HeadySystems/heady-automation-ide | Yes (ci/deploy) | Broken | Unspecified | Fix packaging first |
-| HeadySystems/sandbox | Yes | Unspecified | Unspecified | CI vs pnpm mismatch |
-| HeadySystems/HeadyMonorepo | Limited ("setup") | Unspecified | Unspecified | Needs quality gates |
-| HeadySystems/ai-workflow-engine | Unspecified | Unspecified | Unspecified | Add CI for schema validation + typechecks |
-| Others | Unspecified | Unspecified | Unspecified | Standardize baseline |
+| Tier | Repos | With CI/CD | Coverage |
+|------|-------|------------|----------|
+| Monorepos | 8 | 8 | 100% |
+| Enterprise/Specialized | 6 | 2 | 33% |
+| Projection/-core | 9 | 9 | 100% (deploy.yml) |
+| Static Scaffolds | ~50 | 0 | **0%** |
+| Empty/Minimal | 5 | 0 | 0% |
+| Org Profile (.github) | 1 | 0 | N/A |
 
-### Target CI Pipeline
+### Workflow Counts (Top Repos)
 
-Every repo should include:
-1. **Lint** — code style enforcement
-2. **Type check** — TypeScript strict / mypy
+| Repo | Workflows | Notable |
+|------|-----------|---------|
+| HeadyAI/Sandbox | 44 | Most workflows |
+| HeadyConnection/Heady-Testing | 37 | Most comprehensive security (DAST, SAST, secrets) |
+| HeadyConnection/Heady-Main | 30 | CodeQL + Trivy |
+| HeadyAI/Heady | 28 | Standard CI/CD |
+| HeadyMe/Heady-Staging | 28 | Mirrors Heady |
+| HeadySystems/sandbox | 31 | Large workflow set |
+| HeadyMe/latent-core-dev | 5 | Projection workflows |
+
+### Target CI Baseline (All Repos)
+
+1. **Lint** — ESLint/Prettier
+2. **Type check** — TypeScript strict
 3. **Unit tests** — with coverage thresholds
-4. **SCA** — Dependency-Check / Trivy
+4. **SCA** — Dependabot + Trivy
 5. **SAST** — CodeQL
 6. **Secret scanning** — GitHub native
-7. **License audit** — automated compliance
-8. **Build** — reproducible with locked dependencies
-9. **Deploy** — OIDC auth, environment-gated
+7. **Build** — reproducible with lockfiles
+8. **Deploy** — OIDC auth, environment-gated
 
 ---
 
-## Liquid Architecture Design
+## Architecture Map
 
-### Canonical Connection Plan
+### Four Organizations
 
-| Layer | Technology | Role | Consistency Model |
-|---|---|---|---|
-| Change Ledger | GitHub (PRs) | All changes via PR | Strong (git) |
-| Automation | GitHub Actions | CI/CD backbone | Event-driven |
-| Edge Router | Cloudflare Worker | Workflow execution | Edge-distributed |
-| Config Distribution | Workers KV | Read-heavy cache | Eventually consistent |
-| Authoritative State | Neon Postgres | Source of truth | Strong (ACID) |
-| Vector Retrieval | pgvector (on Neon) | Embeddings index | Strong (ACID) |
-| Queues/Rate Limits | Upstash Redis | Fast async jobs | Eventually consistent |
-| Content Editorial | Drupal CMS | Structured content | Application-level |
-| AI Production | Vertex AI | Model endpoints + evals | Request-scoped |
-| AI Prototyping | AI Studio | Prompt iteration | Ephemeral |
-| Observability | OpenTelemetry + Sentry | Traces, metrics, errors | Streaming |
-| Tool Interop | MCP | Agent/tool standard | Contract-versioned |
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HeadyAI (Primary)                             │
+│  Heady (monorepo) │ Sandbox │ .github (org profile)             │
+└────────────────────┬────────────────────────────────────────────┘
+                     │
+┌────────────────────┼────────────────────────────────────────────┐
+│                    │  HeadyConnection (Testing/Dev)              │
+│  Heady-Testing │ Heady-Main │ heady-clone                       │
+└────────────────────┬────────────────────────────────────────────┘
+                     │
+┌────────────────────┼────────────────────────────────────────────┐
+│                    │  HeadyMe (60+ repos)                        │
+│  Staging │ Production │ Main-1 │ 50+ scaffolds │ latent-core-dev │
+│  9 -core projections │ 6 -com sites │ templates │ integrations   │
+└────────────────────┬────────────────────────────────────────────┘
+                     │
+┌────────────────────┼────────────────────────────────────────────┐
+│                    │  HeadySystems (Infrastructure)              │
+│  sandbox │ HeadyAutoContext │ HeadyEcosystem                     │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Integration Flows
+### Data Flow
 
-1. **Drupal** → webhooks → Worker endpoint → write metadata to Neon → purge/warm KV caches
-2. **Colab Pro+** → artifacts → Git PR → HeadyMonorepo promotion pipeline
-3. **Worker** → Upstash (rate limiting) → Neon (state) → Vertex AI (inference)
-4. **GitHub Actions** → OIDC → Cloud providers (no static secrets)
-5. **MCP** as versioned contract: stable naming, permissions, example calls
-
----
-
-## Content Playbooks
-
-### ai-workflow-engine
-- Workflow recipe pages (one per use case)
-- Edge constraints guides (timeouts, retries, idempotency)
-- KV consistency guides (safe vs unsafe patterns)
-- Secrets and environments documentation
-
-### HeadyMonorepo
-- Operator runbooks (start/stop, incident response, rollback)
-- Capability registry spec
-- Colab promotion protocol (notebook → PR → deploy)
-- Security posture docs (least privilege, no shell injection)
-
-### heady-automation-ide
-- MCP tool catalog (stable naming, permissions, examples)
-- Integration playbooks (Cloudflare ↔ GitHub ↔ Drupal ↔ Vertex AI)
-- Threat model for agent tools (OWASP-mapped)
-
-### Heady + Environment Repos
-- Stabilization narrative (post-conflict resolution)
-- Environment strategy (overlays, not repo duplication)
-- System architecture explainer (edge vs core)
-- Security and CORS patterns
-
-### sandbox
-- RFCs (design proposals)
-- Benchmark posts (performance, cost)
-- Prototype → promotion writeups
-
-### HeadyMe/Heady-Staging
-- Docs-as-code + Drupal editorial hybrid
-- Release notes as content (auto-generated changelogs)
-- User journey guides (onboarding flows)
+```
+┌──────────────────────────────────────────────────────────────┐
+│                   Cloudflare Edge Layer                        │
+│  Workers (ai-workflow-engine) │ KV (config cache) │ Pages     │
+└──────────────┬───────────────────────────────────────────────┘
+               │
+┌──────────────┼───────────────────────────────────────────────┐
+│              ▼         Core Services                          │
+│  heady-manager.js:3300 │ Python conductor │ MCP server        │
+└──────────────┬───────────────────────────────────────────────┘
+               │
+┌──────────────┼───────────────────────────────────────────────┐
+│              ▼         State + Memory                         │
+│  Neon PG (truth) │ Upstash Redis (queues) │ pgvector          │
+└──────────────┬───────────────────────────────────────────────┘
+               │
+┌──────────────┼───────────────────────────────────────────────┐
+│              ▼         AI Compute                             │
+│  Vertex AI (prod) │ AI Studio (proto) │ Claude/Anthropic      │
+└──────────────┬───────────────────────────────────────────────┘
+               │
+┌──────────────┼───────────────────────────────────────────────┐
+│              ▼         Observability                          │
+│  Sentry │ OpenTelemetry │ Prometheus │ Grafana                │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Open Source Recommendations
+## Duplication Analysis
 
-### Adopt Now
+### Monorepo Clones (MAJOR CONCERN)
 
-| Project | Rationale | Best Fit |
-|---|---|---|
-| **OpenTelemetry** | Vendor-neutral observability (traces/metrics/logs) | Worker, Node, Python, Colab jobs |
-| **CodeQL** | Semantic security scanning with GitHub Actions queries | All repos with code |
-| **Trivy** | All-in-one scanner for vulns + misconfigs | Containers, IaC, repos |
-| **OWASP Dependency-Check** | CVE detection via evidence/CPE mapping | CI pipelines |
-| **pgvector** | Vector similarity search inside Postgres | Neon (keeps vectors with data) |
-| **MCP** | Standard protocol for tool/context integration | Agent interoperability |
+These repos share 95%+ identical codebases:
+
+| Group | Repos | Files Each |
+|-------|-------|------------|
+| **v4.1 Clone Group** | HeadyAI/Heady, HeadyMe/Heady-Staging, HeadyMe/heady-production, HeadyConnection/Heady-Main | ~20,000 |
+| **v4.0 Clone Group** | HeadyConnection/Heady-Testing, HeadyMe/Heady-Main-1 | ~46,000 |
+| **Sandbox Group** | HeadyAI/Sandbox, HeadySystems/sandbox | ~8,000-15,000 |
+
+**Recommendation**: Collapse to a single canonical repo with environment branches or overlays.
+
+### Scaffold Template Duplication
+
+~50 repos share an identical `server.js` (only `SERVICE_NAME` constant differs), identical `Dockerfile`, identical `_redirects`, identical `serve.json`. These should be a single deployment with route-based configuration, or generated from a template repo.
+
+### Domain Trio Pattern
+
+Repeated for 5 product lines:
+- `{name}` — main site scaffold
+- `{name}-com` — .com domain site (security-hardened variant)
+- `{name}-core` — projection with deploy.yml
+
+Products: headyme, headyio, headymcp, headysystems, headyconnection, headybuddy
+
+---
+
+## Org Governance
+
+### Remote Mismatch Issues
+
+| Local Dir | Expected Org | Actual Remote | Issue |
+|-----------|-------------|---------------|-------|
+| Heady-Main | HeadyMe | HeadyConnection | Org mismatch |
+| Heady-Testing | HeadyAI | HeadyConnection | Org mismatch |
+
+### Missing Community Health Files
+
+| File | Present In | Missing From |
+|------|-----------|-------------|
+| README.md | 73/75 | 1ime1, HeadyEcosystem |
+| LICENSE | 4/75 | 71 repos |
+| .gitignore | 5/75 | 70 repos |
+| CONTRIBUTING.md | 0/75 | All |
+| CODE_OF_CONDUCT.md | 0/75 | All |
+| SECURITY.md | 0/75 | All |
+
+### Tech Debt Distribution
+
+| Repo | TODOs | FIXMEs | Total |
+|------|-------|--------|-------|
+| HeadyMe/Heady-Staging | 258 | ~40 | ~298 |
+| HeadyAI/Heady | 244 | ~40 | ~284 |
+| HeadyMe/Heady-Main-1 | 195 | 42 | 237 |
+| HeadyConnection/Heady-Testing | 232 | ~35 | ~267 |
+| HeadyConnection/Heady-Main | 204 | 44 | 248 |
+| HeadyMe/heady-production | 204 | 44 | 248 |
+| HeadyAI/Sandbox | 214 | ~35 | ~249 |
+| HeadyConnection/heady-clone | 96 | ~10 | ~106 |
+| HeadySystems/sandbox | 75 | ~10 | ~85 |
+| All others | 0-5 | 0-3 | <10 |
+| **TOTAL** | **~1,100+** | **~130+** | **~1,230+** |
 
 ---
 
 ## Remediation Roadmap
 
-### Phase 1: Stop-the-Line Fixes
-- [ ] Resolve merge conflicts in `HeadySystems/Heady` + environment clones
-- [ ] Make main branch buildable across all repos
-- [ ] Fix `heady-automation-ide` package.json + license metadata alignment
-- [ ] Ensure CI can run on all repos
+### Phase 0: Emergency (Do Now)
+- [ ] Rotate Cloudflare API token in latent-core-dev
+- [ ] Add `.wrangler/` to .gitignore in headyme
+- [ ] Resolve merge conflicts in Sandbox README + docs
+- [ ] Resolve merge conflicts in Heady-Main-1 README
+- [ ] Resolve merge conflicts in heady-clone README
+- [ ] Verify/rotate `sk-hive-node-01` LiteLLM key in archived configs
 
-### Phase 2: Security Baseline Gates
-- [ ] Enable Dependabot + Dependency Graph across all repos
-- [ ] Require lockfiles in all repos
-- [ ] Add CodeQL scanning + secret scanning (pin to supported versions)
-- [ ] Add Trivy and/or OWASP Dependency-Check as SCA gate in CI
-- [ ] Fix CORS policies + auth boundaries (no wildcard credentialed CORS)
+### Phase 1: Foundation (Week 1-2)
+- [ ] Add .gitignore to all 70 repos missing it
+- [ ] Add README.md to 1ime1 and HeadyEcosystem
+- [ ] Add LICENSE to all repos (standardize on one license)
+- [ ] Add .env.example to repos using env vars (68 missing)
+- [ ] Add package-lock.json to all Node.js repos
 
-### Phase 3: Unify Environments + Deployment
-- [ ] Collapse Main/Staging/Testing repos to environment overlays in single canonical repos
-- [ ] Use GitHub Actions + OIDC for deploy auth
-- [ ] Reduce long-lived cloud secrets
+### Phase 2: Security Hardening (Week 2-4)
+- [ ] Enable GitHub secret scanning on all repos
+- [ ] Enable Dependabot on all repos
+- [ ] Add CodeQL scanning to repos with code
+- [ ] Add Trivy scanning to repos with Dockerfiles
+- [ ] Fix CORS wildcard in all scaffold server.js files
+- [ ] Audit and remove _archive/ directories from monorepos
 
-### Phase 4: Data/State Architecture Hardening
-- [ ] Define authoritative state in Neon (KV only for distribution)
-- [ ] Add pgvector for retrieval + memory
-- [ ] Standardize embeddings pipeline
-- [ ] Add Upstash queues/rate limits (edge safety + async jobs)
+### Phase 3: Consolidation (Week 4-8)
+- [ ] Collapse 4 monorepo clones → 1 canonical + environment branches
+- [ ] Collapse 50+ scaffolds → template repo + per-service config
+- [ ] Collapse domain trios → single repo per product with subdomain routing
+- [ ] Standardize org boundaries (decide HeadyAI vs HeadyMe vs HeadyConnection roles)
 
-### Phase 5: Content Factory + Growth Loops
-- [ ] Docs-as-code + Drupal editorial pipeline
-- [ ] Publish via CI to Cloudflare Pages
-- [ ] Workflow template library (edge to core promotion)
-- [ ] Colab Pro+ promotion protocol (notebook → PR → deploy)
+### Phase 4: CI/CD Rollout (Week 4-8)
+- [ ] Create shared workflow templates in HeadyAI/.github
+- [ ] Deploy baseline CI (lint + build + scan) to all active repos
+- [ ] Add test frameworks to monorepos
+- [ ] Implement environment-gated deploys with OIDC
 
----
-
-## Index Coverage Summary
-
-| Repo | README | docs/ | .github/workflows/ | package.json/lock | Python deps | Entrypoints | Dockerfile |
-|---|---|---|---|---|---|---|---|
-| HeadyMonorepo | ✅ | ❓ | ✅ (limited) | ✅ (lock ❓) | ✅ (partial) | ✅ | ❓ |
-| ai-workflow-engine | ✅ | ❓ | ❓ | ✅ (lock ❓) | N/A | ✅ | N/A |
-| heady-automation-ide | ✅ | ✅ | ✅ | ⚠️ Broken | ❓ | ✅ (MCP) | ❓ |
-| Heady | ✅ | ❓ | ✅ | ✅ | ❓ | ⚠️ Conflicted | ❓ |
-| sandbox | ✅ | ❓ | ✅ | ✅ (pnpm) | ❓ | ✅ | ❓ |
-| Heady-pre-production | ✅ | ❓ | ❓ | ✅ | ❓ | ✅ | ❓ |
-| Heady-Main/Staging/Testing | ✅ (duped) | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
-| main | ✅ | ❓ | ❓ | ❓ | ❓ | render.yaml | ❓ |
-| HeadyMe | ✅ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
-| Others | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
-
-**Legend**: ✅ Verified present | ⚠️ Issues found | ❓ Not verified | N/A Not applicable
+### Phase 5: Operational Maturity (Month 2-3)
+- [ ] Add OpenTelemetry instrumentation to core services
+- [ ] Build TODO/FIXME burndown plan for 1,230+ items
+- [ ] Implement docs-as-code pipeline
+- [ ] Add community health files (CONTRIBUTING, CODE_OF_CONDUCT, SECURITY)
+- [ ] Regular automated ecosystem audits
 
 ---
 
-*Generated by Claude Code — Heady GitHub Ecosystem Research Audit*
+## Index Coverage Summary (Updated)
+
+| Metric | Tier 1 Monorepos | Tier 3 Projections | Tier 4 Scaffolds | Tier 5 Empty |
+|--------|-----------------|-------------------|------------------|-------------|
+| README | ✅ (2 broken) | ✅ | ✅ | ⚠️ (2 missing) |
+| package.json | ✅ | ✅ | ✅ (0 deps) | ❌ |
+| Lockfile | ✅ | ❌ | ❌ | ❌ |
+| Dockerfile | ✅ | ✅ | ✅ | ❌ |
+| CI/CD | ✅ (28-44 workflows) | ✅ (deploy.yml) | ❌ | ❌ |
+| .env.example | ✅ (most) | ❌ | ❌ | ❌ |
+| .gitignore | ✅ (some) | ❌ | ❌ | ❌ |
+| Tests | ⚠️ (minimal) | ❌ | ❌ | ❌ |
+| LICENSE | ⚠️ (few) | ❌ | ❌ | ❌ |
+| ECOSYSTEM-AUDIT | ✅ | ✅ | ✅ | ✅ |
+
+**Legend**: ✅ Present | ⚠️ Partial/Issues | ❌ Missing
+
+---
+
+*Generated by Claude Code — Heady GitHub Ecosystem Deep Research Audit v2.0*
+*Full deep scan of 75 repositories across 4 organizations*
 *Session: claude/github-ecosystem-research-XuL9T*

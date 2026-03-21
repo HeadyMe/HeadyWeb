@@ -1,166 +1,365 @@
-# Heady Ecosystem Remediation Tracker
-# Generated: 2026-03-21
+# Heady Ecosystem Remediation Tracker v2.0
+# Updated: 2026-03-21 (Full deep scan of 75 repos)
 # Branch: claude/github-ecosystem-research-XuL9T
 
 metadata:
+  audit_version: "2.0"
   audit_date: "2026-03-21"
+  scan_type: "full_deep_scan"
   scope:
     - HeadySystems
     - HeadyMe
     - HeadyAI
     - HeadyConnection
-  total_repos_discovered: 70+
-  repos_analyzed: 15
+  total_repos_scanned: 75
+  total_files_scanned: "~167,000"
+  organizations: 4
+
+ecosystem_health:
+  overall_score: 42
+  rating: "NEEDS SIGNIFICANT WORK"
+  breakdown:
+    security: 35
+    ci_cd_coverage: 16
+    code_quality: 55
+    documentation: 30
+    repo_hygiene: 20
+    consolidation: 15
+
+critical_metrics:
+  repos_with_ci: 12
+  repos_without_ci: 63
+  repos_with_tests: 4
+  repos_with_gitignore: 5
+  repos_with_license: 4
+  repos_with_env_example: 7
+  repos_with_lockfile: 8
+  repos_with_merge_conflicts: 3
+  hardcoded_secrets_found: 2
+  total_todo_fixme: 1230
+  scaffold_duplicate_repos: 50
 
 phases:
-  - name: "Phase 1: Stop-the-Line Fixes"
-    priority: IMMEDIATE
+  - name: "Phase 0: Emergency Actions"
+    priority: CRITICAL
+    timeline: "Immediate"
     items:
-      - id: STL-001
-        title: "Resolve merge conflicts in HeadySystems/Heady"
-        repos: ["HeadySystems/Heady"]
-        files: ["README.md", "heady-manager.js"]
+      - id: EMG-001
+        title: "Rotate hardcoded Cloudflare API token"
+        repos: ["HeadyMe/latent-core-dev"]
+        files:
+          - "scripts/dns-update.js"
+          - "scripts/dns-check.js"
+        detail: "Token VGNo4j... and Zone ID d71262d... are hardcoded. Rotate token in Cloudflare dashboard, replace with process.env.CF_API_TOKEN"
+        owasp: "A01:2021 Broken Access Control"
+        severity: CRITICAL
         status: open
 
-      - id: STL-002
-        title: "Resolve merge conflicts in environment clones"
+      - id: EMG-002
+        title: "Gitignore .wrangler cache directory"
+        repos: ["HeadyMe/headyme"]
+        files: [".wrangler/cache/wrangler-account.json", ".wrangler/cache/pages.json"]
+        detail: "Cloudflare account ID 8b1fa38f... committed. Add .wrangler/ to .gitignore and remove from git history"
+        severity: HIGH
+        status: open
+
+      - id: EMG-003
+        title: "Resolve merge conflicts in Sandbox"
+        repos: ["HeadyAI/Sandbox"]
+        files:
+          - "README.md (5 conflict blocks)"
+          - "docs/security_ci_memo.md"
+          - "docs/docs_ops_memo.md"
+        severity: HIGH
+        status: open
+
+      - id: EMG-004
+        title: "Resolve merge conflicts in Heady-Main-1"
+        repos: ["HeadyMe/Heady-Main-1"]
+        files: ["README.md (4+ conflict blocks)"]
+        severity: HIGH
+        status: open
+
+      - id: EMG-005
+        title: "Resolve merge conflicts in heady-clone"
+        repos: ["HeadyConnection/heady-clone"]
+        files: ["README.md"]
+        severity: MEDIUM
+        status: open
+
+      - id: EMG-006
+        title: "Verify/rotate archived LiteLLM API key"
         repos:
-          - HeadySystems/Heady-Main
-          - HeadySystems/Heady-Staging
-          - HeadySystems/Heady-Testing
+          - "HeadyConnection/Heady-Main"
+          - "HeadyMe/Heady-Main-1"
+          - "HeadyMe/heady-production"
+        files: ["_archive/configs/infrastructure/cloud/cmd-center-litellm.yaml"]
+        detail: "Key sk-hive-node-01 — verify if placeholder or real. If real, rotate immediately"
+        severity: MEDIUM
         status: open
 
-      - id: STL-003
-        title: "Fix malformed package.json in heady-automation-ide"
-        repos: ["HeadySystems/heady-automation-ide"]
-        files: ["package.json"]
+      - id: EMG-007
+        title: "Fix Dockerfile base image inconsistency in Sandbox"
+        repos: ["HeadyAI/Sandbox"]
+        detail: "Mixed node:20-alpine and node:22-alpine base images. Standardize on node:22-alpine"
+        severity: LOW
         status: open
 
-      - id: STL-004
-        title: "Align license metadata (MIT in package.json vs Apache-2.0 in LICENSE)"
-        repos: ["HeadySystems/heady-automation-ide"]
-        files: ["package.json", "LICENSE"]
+  - name: "Phase 1: Foundation & Hygiene"
+    priority: HIGH
+    timeline: "Week 1-2"
+    items:
+      - id: HYG-001
+        title: "Add .gitignore to all repos"
+        repos: ["70 repos missing .gitignore"]
+        detail: "Standard Node.js .gitignore: node_modules/, dist/, .env, .wrangler/, *.log"
+        status: open
+        count: 70
+
+      - id: HYG-002
+        title: "Add README.md to repos missing it"
+        repos:
+          - "HeadyMe/1ime1"
+          - "HeadySystems/HeadyEcosystem"
+        status: open
+        count: 2
+
+      - id: HYG-003
+        title: "Add LICENSE file to all repos"
+        repos: ["71 repos missing LICENSE"]
+        detail: "Standardize on single license across ecosystem"
+        status: open
+        count: 71
+
+      - id: HYG-004
+        title: "Add .env.example to repos using environment variables"
+        repos: ["68 repos missing .env.example"]
+        detail: "Document PORT, API_TARGET, SERVICE_NAME, NODE_ENV at minimum"
+        status: open
+        count: 68
+
+      - id: HYG-005
+        title: "Add package-lock.json to all Node.js repos"
+        repos: ["~60 repos with package.json but no lockfile"]
+        detail: "Run npm install to generate lockfile for reproducible builds"
+        status: open
+        count: 60
+
+      - id: HYG-006
+        title: "Fix missing .env.example in Sandbox"
+        repos: ["HeadyAI/Sandbox"]
+        detail: "Only monorepo without .env.example (Heady has 247-line version)"
+        status: open
+
+      - id: HYG-007
+        title: "Fix org remote mismatch for Heady-Main"
+        repos: ["HeadyConnection/Heady-Main"]
+        detail: "Local dir expects HeadyMe but remote is HeadyConnection. Document or fix"
         status: open
 
   - name: "Phase 2: Security Baseline"
     priority: HIGH
+    timeline: "Week 2-4"
     items:
       - id: SEC-001
-        title: "Enable Dependabot security updates"
+        title: "Enable GitHub secret scanning on all repos"
         repos: ["ALL"]
         status: open
+        count: 75
 
       - id: SEC-002
-        title: "Add CodeQL scanning"
-        repos: ["ALL with code"]
-        status: open
+        title: "Enable Dependabot security updates"
+        repos: ["ALL"]
+        detail: "Heady-Testing already has active Dependabot (9 merge commits visible)"
+        status: partial
+        count: 75
 
       - id: SEC-003
-        title: "Add secret scanning"
-        repos: ["ALL"]
-        status: open
+        title: "Add CodeQL scanning"
+        repos: ["ALL repos with code"]
+        detail: "Heady-Testing and Heady-Main already have CodeQL. Extend to all"
+        status: partial
+        count: 70
 
       - id: SEC-004
+        title: "Add Trivy container scanning"
+        repos: ["ALL repos with Dockerfiles"]
+        detail: "Heady-Testing already has container-scan.yml. Extend to all"
+        status: partial
+        count: 62
+
+      - id: SEC-005
+        title: "Fix CORS wildcard in scaffold server.js files"
+        repos: ["~50 scaffold repos"]
+        detail: "Replace Access-Control-Allow-Origin: * with explicit allowed origins"
+        owasp: "A05:2021 Security Misconfiguration"
+        status: open
+        count: 50
+
+      - id: SEC-006
         title: "Fix shell execution risk in Python builder"
-        repos: ["HeadySystems/HeadyMonorepo"]
+        repos: ["Monorepo clones (4+ repos)"]
         owasp: "A03:2021 Injection"
         status: open
 
-      - id: SEC-005
-        title: "Add auth patterns at edge"
-        repos: ["HeadySystems/ai-workflow-engine"]
-        owasp: "A07:2021 Identification/Auth Failures"
-        status: open
-
-      - id: SEC-006
-        title: "Fix CORS policies (no wildcard credentialed)"
-        repos: ["HeadySystems/ai-workflow-engine", "HeadySystems/Heady"]
-        owasp: "A05:2021 Security Misconfiguration"
-        status: open
-
       - id: SEC-007
-        title: "Require lockfiles in all repos"
-        repos: ["ALL"]
-        status: open
-
-  - name: "Phase 3: Environment Unification"
-    priority: MEDIUM
-    items:
-      - id: ENV-001
-        title: "Collapse Main/Staging/Testing to environment overlays"
+        title: "Audit and clean _archive/ directories"
         repos:
-          - HeadySystems/Heady-Main
-          - HeadySystems/Heady-Staging
-          - HeadySystems/Heady-Testing
+          - "HeadyConnection/Heady-Main"
+          - "HeadyMe/Heady-Main-1"
+          - "HeadyMe/heady-production"
+        detail: "Contains archived configs with potential secrets. Remove or gitcrypt"
         status: open
 
-      - id: ENV-002
-        title: "Implement GitHub Actions OIDC for deploy auth"
-        repos: ["ALL deploying repos"]
+      - id: SEC-008
+        title: "Add SECURITY.md to ecosystem"
+        repos: ["HeadyAI/.github (org-wide default)"]
+        detail: "Responsible disclosure policy, security contact, scope"
         status: open
 
-      - id: ENV-003
-        title: "Align CI with declared package manager"
-        repos: ["HeadySystems/sandbox"]
-        detail: "pnpm declared but npm used in CI"
-        status: open
-
-  - name: "Phase 4: Data Architecture"
+  - name: "Phase 3: Consolidation"
     priority: MEDIUM
-    items:
-      - id: DAT-001
-        title: "Define authoritative state in Neon Postgres"
-        status: open
-
-      - id: DAT-002
-        title: "Add pgvector for retrieval/memory"
-        status: open
-
-      - id: DAT-003
-        title: "Add Upstash queues/rate limits at edge"
-        status: open
-
-      - id: DAT-004
-        title: "Restrict KV to read-heavy distribution only"
-        repos: ["HeadySystems/ai-workflow-engine"]
-        status: open
-
-  - name: "Phase 5: Content Factory"
-    priority: STANDARD
+    timeline: "Week 4-8"
     items:
       - id: CON-001
-        title: "Docs-as-code pipeline with CI publishing"
+        title: "Collapse monorepo clones to single canonical"
+        detail: |
+          4 repos with ~20K files each are 95%+ identical:
+          HeadyAI/Heady, HeadyMe/Heady-Staging, HeadyMe/heady-production, HeadyConnection/Heady-Main
+          Plus 2 repos with ~46K files: HeadyConnection/Heady-Testing, HeadyMe/Heady-Main-1
+          Target: 1 canonical repo + environment branches/overlays
         status: open
+        savings: "~100K duplicate files eliminated"
 
       - id: CON-002
-        title: "Workflow template library"
+        title: "Collapse ~50 scaffold repos to template-driven deployment"
+        detail: |
+          All share identical server.js/Dockerfile/serve.json with only SERVICE_NAME differing.
+          Options: (a) single repo with config-per-service, (b) template repo + generator,
+          (c) monorepo with packages/ per service
         status: open
+        savings: "~50 repos eliminated"
 
       - id: CON-003
-        title: "Colab Pro+ promotion protocol"
+        title: "Collapse domain trio pattern"
+        detail: |
+          5 product lines each have 3 repos ({name}, {name}-com, {name}-core).
+          These 15 repos could be 5 repos with subdomain routing.
+          Products: headyme, headyio, headymcp, headysystems, headyconnection
+        status: open
+        savings: "~10 repos eliminated"
+
+      - id: CON-004
+        title: "Standardize org boundaries"
+        detail: |
+          Clarify roles: HeadyAI (canonical source), HeadyMe (personal/staging),
+          HeadyConnection (community), HeadySystems (infrastructure).
+          Currently repos are scattered inconsistently.
+        status: open
+
+      - id: CON-005
+        title: "Resolve HeadySystems push permissions"
+        repos:
+          - "HeadySystems/sandbox"
+          - "HeadySystems/HeadyAutoContext"
+          - "HeadySystems/HeadyEcosystem"
+        detail: "HeadyMe account lacks write access to HeadySystems org. Grant access or use fork+PR model"
+        status: blocked
+
+  - name: "Phase 4: CI/CD Rollout"
+    priority: MEDIUM
+    timeline: "Week 4-8"
+    items:
+      - id: CI-001
+        title: "Create shared workflow templates in HeadyAI/.github"
+        detail: |
+          Reusable workflows for: lint, build, test, scan, deploy.
+          All repos can reference these via workflow_call.
+        status: open
+
+      - id: CI-002
+        title: "Deploy baseline CI to all active repos"
+        repos: ["63 repos without CI"]
+        detail: "At minimum: lint + build + secret scan"
+        status: open
+        count: 63
+
+      - id: CI-003
+        title: "Add test frameworks to monorepos"
+        repos: ["Tier 1 monorepos"]
+        detail: "Jest for Node.js, pytest for Python. Currently 0% test coverage"
+        status: open
+
+      - id: CI-004
+        title: "Implement OIDC deploy auth"
+        repos: ["ALL deploying repos"]
+        detail: "Replace long-lived cloud secrets with GitHub Actions OIDC tokens"
+        status: open
+
+  - name: "Phase 5: Operational Maturity"
+    priority: STANDARD
+    timeline: "Month 2-3"
+    items:
+      - id: OPS-001
+        title: "TODO/FIXME burndown plan"
+        detail: "1,230+ items across ecosystem. Prioritize by severity, create issues"
+        status: open
+
+      - id: OPS-002
+        title: "Add OpenTelemetry instrumentation"
+        detail: "Core services (heady-manager, Python conductor) need traces/metrics"
+        status: open
+
+      - id: OPS-003
+        title: "Community health files"
+        detail: "CONTRIBUTING.md, CODE_OF_CONDUCT.md via HeadyAI/.github org defaults"
+        status: open
+
+      - id: OPS-004
+        title: "Automated ecosystem audit schedule"
+        detail: "Run this deep scan monthly via GitHub Actions"
+        status: open
+
+      - id: OPS-005
+        title: "Docs-as-code pipeline"
+        detail: "CI publishing to Cloudflare Pages from heady-docs"
         status: open
 
 open_source_adoption:
   - name: OpenTelemetry
-    purpose: "Vendor-neutral observability"
+    purpose: "Vendor-neutral observability (traces/metrics/logs)"
+    target_repos: ["Monorepos", "Core services"]
     status: recommended
 
   - name: CodeQL
     purpose: "Semantic security scanning"
-    status: recommended
+    target_repos: ["ALL with code"]
+    status: partial_adoption
+    already_in: ["Heady-Testing", "Heady-Main"]
 
   - name: Trivy
-    purpose: "All-in-one security scanner"
-    status: recommended
+    purpose: "Container + IaC scanning"
+    target_repos: ["ALL with Dockerfiles"]
+    status: partial_adoption
+    already_in: ["Heady-Testing"]
 
   - name: "OWASP Dependency-Check"
     purpose: "SCA / CVE detection"
+    target_repos: ["Monorepos"]
     status: recommended
 
   - name: pgvector
     purpose: "Vector similarity search in Postgres"
+    target_repos: ["Core data layer"]
     status: recommended
 
   - name: MCP
     purpose: "Agent/tool interoperability standard"
-    status: recommended
+    target_repos: ["template-mcp-server", "heady-automation-ide"]
+    status: in_use
+
+  - name: Semgrep
+    purpose: "Custom security rules"
+    target_repos: ["Monorepos"]
+    status: partial_adoption
+    already_in: ["Heady-Testing (semgrep-rules.yaml)"]
