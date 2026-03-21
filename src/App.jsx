@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
 import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
+import Onboarding from './Onboarding.jsx';
+import { useOnboarding } from './useOnboarding.js';
 
 // ── Heady Brain API + Knowledge Base ──
 const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
@@ -639,22 +641,19 @@ function PricingModal({ open, onClose }) {
 }
 
 // ── Main App ──
-function App() {
+function AppMain({ user }) {
   const [tabs, setTabs] = useState([
     { id: 1, title: 'New Tab', url: 'headyweb://newtab', favicon: '✦' }
   ]);
   const [activeTab, setActiveTab] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchState, setSearchState] = useState({ query: '', result: null, loading: false });
-  const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthChange(setUser);
     // Pre-warm connection to Heady Brain
     fetch(`${HEADY_BRAIN_URL}/api/brain/health`, { signal: AbortSignal.timeout(2000) }).catch(() => { });
-    return () => unsub && unsub();
   }, []);
 
   const newTab = useCallback(() => {
@@ -724,6 +723,29 @@ function App() {
       <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} />
     </div>
   );
+}
+
+function App() {
+  const [user, setUser] = useState(null);
+  const onboarding = useOnboarding(user);
+
+  useEffect(() => {
+    const unsub = onAuthChange(setUser);
+    return () => unsub && unsub();
+  }, []);
+
+  // Show onboarding for first-time users (not yet completed)
+  if (!onboarding.isComplete) {
+    return (
+      <Onboarding
+        user={user}
+        onboarding={onboarding}
+        onComplete={() => {/* isComplete becomes true, re-renders to AppMain */}}
+      />
+    );
+  }
+
+  return <AppMain user={user} />;
 }
 
 export default App;
