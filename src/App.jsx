@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
 import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
+import HeadyIDE from './ide/HeadyIDE';
+import './ide/ide.css';
 
 // ── Heady Brain API + Knowledge Base ──
 const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
@@ -168,13 +170,13 @@ function SacredGeometryBg() {
 
 // ── Quick Access Sites ──
 const QUICK_SITES = [
+  { name: 'HeadyAI-IDE', url: 'headyweb://ide', color: '#7c3aed', icon: '✨', isIDE: true },
   { name: 'HeadySystems', url: 'https://headysystems.com', color: '#3b82f6', icon: '⚙️' },
   { name: 'HeadyMe', url: 'https://headyme.com', color: '#8b5cf6', icon: '👤' },
   { name: 'HeadyBuddy', url: 'https://headybuddy.org', color: '#10b981', icon: '🤖' },
   { name: 'HeadyMCP', url: 'https://headymcp.com', color: '#f59e0b', icon: '🔌' },
   { name: 'HeadyIO', url: 'https://headyio.com', color: '#06b6d4', icon: '🌐' },
   { name: 'HeadyConnection', url: 'https://headyconnection.org', color: '#ec4899', icon: '🤝' },
-  { name: 'Google', url: 'https://google.com', color: '#4285f4', icon: '🔍' },
   { name: 'GitHub', url: 'https://github.com', color: '#8b949e', icon: '🐙' },
 ];
 
@@ -250,7 +252,7 @@ function AddressBar({ url, onNavigate, onToggleSidebar, onSearch }) {
 }
 
 // ── Bookmarks Bar ──
-function BookmarksBar() {
+function BookmarksBar({ onOpenIDE }) {
   const bookmarks = [
     { name: 'HeadySystems', url: 'https://headysystems.com', icon: '⚙️' },
     { name: 'HeadyMe', url: 'https://headyme.com', icon: '👤' },
@@ -262,6 +264,10 @@ function BookmarksBar() {
 
   return (
     <div className="bookmarks-bar">
+      <button onClick={onOpenIDE} className="bookmark-chip" style={{ color: '#a78bfa', fontWeight: 600 }}>
+        <span>✨</span>
+        <span>HeadyAI-IDE</span>
+      </button>
       {bookmarks.map((b, i) => (
         <a key={i} href={b.url} className="bookmark-chip" target="_blank" rel="noopener noreferrer">
           <span>{b.icon}</span>
@@ -425,7 +431,7 @@ function HeadyBrainResults({ query, result, loading }) {
 }
 
 // ── New Tab Page ──
-function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
+function NewTabPage({ onSearch, user, onSignIn, onPricing, onOpenIDE }) {
   const [searchInput, setSearchInput] = useState('');
   const [time, setTime] = useState(new Date());
   const searchRef = useRef(null);
@@ -476,12 +482,21 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
         {/* Quick Access Tiles */}
         <div className="grid grid-cols-4 gap-3 mb-10 w-full max-w-lg">
           {QUICK_SITES.map((site, i) => (
-            <a key={i} href={site.url} target="_blank" rel="noopener noreferrer" className="quick-tile group">
-              <div className="tile-icon" style={{ background: `${site.color}18`, color: site.color }}>
-                {site.icon}
-              </div>
-              <span className="tile-label group-hover:text-white/80 transition-colors">{site.name}</span>
-            </a>
+            site.isIDE ? (
+              <button key={i} onClick={onOpenIDE} className="quick-tile group">
+                <div className="tile-icon" style={{ background: `${site.color}18`, color: site.color }}>
+                  {site.icon}
+                </div>
+                <span className="tile-label group-hover:text-white/80 transition-colors">{site.name}</span>
+              </button>
+            ) : (
+              <a key={i} href={site.url} target="_blank" rel="noopener noreferrer" className="quick-tile group">
+                <div className="tile-icon" style={{ background: `${site.color}18`, color: site.color }}>
+                  {site.icon}
+                </div>
+                <span className="tile-label group-hover:text-white/80 transition-colors">{site.name}</span>
+              </a>
+            )
           ))}
         </div>
 
@@ -492,9 +507,13 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
             <span className="text-green-400/60 font-medium">Heady Brain Online</span>
           </div>
           <span className="text-white/10">|</span>
-          <span className="text-white/25">HeadyBattle Active</span>
+          <span className="text-purple-400/60 font-medium">ORS 100</span>
           <span className="text-white/10">|</span>
-          <span className="text-white/25">HCFP Enforced</span>
+          <span className="text-white/25">HCFullPipeline v8.0</span>
+          <span className="text-white/10">|</span>
+          <span className="text-white/25">Auto-Success Active</span>
+          <span className="text-white/10">|</span>
+          <span className="text-white/25">11 Agents · 47 MCP Tools</span>
           <span className="text-white/10">|</span>
           <span className="text-white/25">Sacred Geometry ✦</span>
         </div>
@@ -649,6 +668,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
+  const [showIDE, setShowIDE] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthChange(setUser);
@@ -671,6 +691,10 @@ function App() {
 
   const navigate = useCallback((url) => {
     if (!url) return;
+    if (url === 'headyweb://ide') {
+      setShowIDE(true);
+      return;
+    }
     setSearchState({ query: '', result: null, loading: false });
     setTabs(prev => prev.map((tab, i) =>
       i === activeTab ? { ...tab, url, title: url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] || 'New Tab' } : tab
@@ -692,6 +716,11 @@ function App() {
   const isNewTab = currentTab?.url === 'headyweb://newtab';
   const isSearch = currentTab?.url?.startsWith('headyweb://search');
 
+  // Full-screen IDE mode
+  if (showIDE) {
+    return <HeadyIDE onBack={() => setShowIDE(false)} />;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#06091a] text-white">
       <TabBar tabs={tabs} activeTab={activeTab}
@@ -701,11 +730,11 @@ function App() {
         onNavigate={navigate}
         onSearch={handleSearch}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <BookmarksBar />
+      <BookmarksBar onOpenIDE={() => setShowIDE(true)} />
 
       <div className="flex-1 relative overflow-hidden">
         {isNewTab ? (
-          <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} />
+          <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} onOpenIDE={() => setShowIDE(true)} />
         ) : isSearch ? (
           <HeadyBrainResults query={searchState.query} result={searchState.result} loading={searchState.loading} />
         ) : (
