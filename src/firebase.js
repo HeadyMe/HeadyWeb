@@ -2,31 +2,39 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// Firebase config — HeadyWeb project
-// TODO: Replace with actual Firebase project credentials when created
+// Firebase config — requires env vars. No hardcoded fallbacks.
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyHeadyWeb-placeholder',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'headyweb.firebaseapp.com',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'headyweb',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'headyweb.appspot.com',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_ID || '000000000000',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:000000000000:web:placeholder',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+const hasConfig = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app, auth, db;
 
-try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-} catch (e) {
-    console.warn('[HeadyWeb] Firebase not configured — running in demo mode:', e.message);
+if (hasConfig) {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (e) {
+        console.warn('[HeadyWeb] Firebase init failed:', e.message);
+    }
+} else {
+    console.info('[HeadyWeb] Firebase env vars not set — running in demo mode.');
 }
 
-const googleProvider = new GoogleAuthProvider();
+/** True when Firebase is properly configured and initialized */
+export const isFirebaseConfigured = Boolean(auth);
+
+const googleProvider = auth ? new GoogleAuthProvider() : null;
 
 export async function signInGoogle() {
-    if (!auth) return { error: 'Firebase not configured' };
+    if (!auth) return { error: 'Auth unavailable — running in demo mode' };
     try {
         const result = await signInWithPopup(auth, googleProvider);
         await saveUserProfile(result.user);
@@ -37,7 +45,7 @@ export async function signInGoogle() {
 }
 
 export async function signInEmail(email, password) {
-    if (!auth) return { error: 'Firebase not configured' };
+    if (!auth) return { error: 'Auth unavailable — running in demo mode' };
     try {
         const result = await signInWithEmailAndPassword(auth, email, password);
         return { user: result.user };
@@ -47,7 +55,7 @@ export async function signInEmail(email, password) {
 }
 
 export async function signUpEmail(email, password) {
-    if (!auth) return { error: 'Firebase not configured' };
+    if (!auth) return { error: 'Auth unavailable — running in demo mode' };
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         await saveUserProfile(result.user);
@@ -70,16 +78,21 @@ export function onAuthChange(callback) {
 async function saveUserProfile(user) {
     if (!db || !user) return;
     try {
-        await setDoc(doc(db, 'users', user.uid), {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+        const data = {
             email: user.email,
             displayName: user.displayName || '',
             photoURL: user.photoURL || '',
             plan: 'free',
-            searchCount: 0,
-            createdAt: serverTimestamp(),
             lastLogin: serverTimestamp(),
             source: 'headyweb-browser',
-        }, { merge: true });
+        };
+        if (!snap.exists()) {
+            data.createdAt = serverTimestamp();
+            data.searchCount = 0;
+        }
+        await setDoc(ref, data, { merge: true });
     } catch (e) {
         console.warn('[HeadyWeb] Could not save profile:', e.message);
     }

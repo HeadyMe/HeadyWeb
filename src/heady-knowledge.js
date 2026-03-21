@@ -127,6 +127,23 @@ Sign up to get started!`,
         source: 'heady-knowledge-base',
     },
     {
+        keywords: ['docs', 'documentation', 'help', 'guide', 'getting started', 'tutorial', 'api docs'],
+        title: 'Heady Documentation & Help',
+        answer: `Heady documentation is available at docs.headysystems.com.
+
+**Resources:**
+• **Heady Docs** — Full documentation at docs.headysystems.com
+• **HeadyMCP** — API & tool integration docs at headymcp.com
+• **HeadySystems** — Architecture overview at headysystems.com
+• **HeadyBuddy** — AI assistant help at headybuddy.org
+
+**In HeadyWeb:**
+• Click "Docs & Help" on the new-tab page for quick access
+• Use the HeadyBuddy sidebar (✨ icon) for interactive help
+• The bookmarks bar includes a direct link to Heady Docs`,
+        source: 'heady-knowledge-base',
+    },
+    {
         keywords: ['sacred geometry', 'metatron', 'design', 'aesthetic'],
         title: 'Sacred Geometry in Heady',
         answer: `Sacred Geometry is the core design philosophy throughout the Heady ecosystem.
