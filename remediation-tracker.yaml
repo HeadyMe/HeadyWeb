@@ -1,0 +1,166 @@
+# Heady Ecosystem Remediation Tracker
+# Generated: 2026-03-21
+# Branch: claude/github-ecosystem-research-XuL9T
+
+metadata:
+  audit_date: "2026-03-21"
+  scope:
+    - HeadySystems
+    - HeadyMe
+    - HeadyAI
+    - HeadyConnection
+  total_repos_discovered: 70+
+  repos_analyzed: 15
+
+phases:
+  - name: "Phase 1: Stop-the-Line Fixes"
+    priority: IMMEDIATE
+    items:
+      - id: STL-001
+        title: "Resolve merge conflicts in HeadySystems/Heady"
+        repos: ["HeadySystems/Heady"]
+        files: ["README.md", "heady-manager.js"]
+        status: open
+
+      - id: STL-002
+        title: "Resolve merge conflicts in environment clones"
+        repos:
+          - HeadySystems/Heady-Main
+          - HeadySystems/Heady-Staging
+          - HeadySystems/Heady-Testing
+        status: open
+
+      - id: STL-003
+        title: "Fix malformed package.json in heady-automation-ide"
+        repos: ["HeadySystems/heady-automation-ide"]
+        files: ["package.json"]
+        status: open
+
+      - id: STL-004
+        title: "Align license metadata (MIT in package.json vs Apache-2.0 in LICENSE)"
+        repos: ["HeadySystems/heady-automation-ide"]
+        files: ["package.json", "LICENSE"]
+        status: open
+
+  - name: "Phase 2: Security Baseline"
+    priority: HIGH
+    items:
+      - id: SEC-001
+        title: "Enable Dependabot security updates"
+        repos: ["ALL"]
+        status: open
+
+      - id: SEC-002
+        title: "Add CodeQL scanning"
+        repos: ["ALL with code"]
+        status: open
+
+      - id: SEC-003
+        title: "Add secret scanning"
+        repos: ["ALL"]
+        status: open
+
+      - id: SEC-004
+        title: "Fix shell execution risk in Python builder"
+        repos: ["HeadySystems/HeadyMonorepo"]
+        owasp: "A03:2021 Injection"
+        status: open
+
+      - id: SEC-005
+        title: "Add auth patterns at edge"
+        repos: ["HeadySystems/ai-workflow-engine"]
+        owasp: "A07:2021 Identification/Auth Failures"
+        status: open
+
+      - id: SEC-006
+        title: "Fix CORS policies (no wildcard credentialed)"
+        repos: ["HeadySystems/ai-workflow-engine", "HeadySystems/Heady"]
+        owasp: "A05:2021 Security Misconfiguration"
+        status: open
+
+      - id: SEC-007
+        title: "Require lockfiles in all repos"
+        repos: ["ALL"]
+        status: open
+
+  - name: "Phase 3: Environment Unification"
+    priority: MEDIUM
+    items:
+      - id: ENV-001
+        title: "Collapse Main/Staging/Testing to environment overlays"
+        repos:
+          - HeadySystems/Heady-Main
+          - HeadySystems/Heady-Staging
+          - HeadySystems/Heady-Testing
+        status: open
+
+      - id: ENV-002
+        title: "Implement GitHub Actions OIDC for deploy auth"
+        repos: ["ALL deploying repos"]
+        status: open
+
+      - id: ENV-003
+        title: "Align CI with declared package manager"
+        repos: ["HeadySystems/sandbox"]
+        detail: "pnpm declared but npm used in CI"
+        status: open
+
+  - name: "Phase 4: Data Architecture"
+    priority: MEDIUM
+    items:
+      - id: DAT-001
+        title: "Define authoritative state in Neon Postgres"
+        status: open
+
+      - id: DAT-002
+        title: "Add pgvector for retrieval/memory"
+        status: open
+
+      - id: DAT-003
+        title: "Add Upstash queues/rate limits at edge"
+        status: open
+
+      - id: DAT-004
+        title: "Restrict KV to read-heavy distribution only"
+        repos: ["HeadySystems/ai-workflow-engine"]
+        status: open
+
+  - name: "Phase 5: Content Factory"
+    priority: STANDARD
+    items:
+      - id: CON-001
+        title: "Docs-as-code pipeline with CI publishing"
+        status: open
+
+      - id: CON-002
+        title: "Workflow template library"
+        status: open
+
+      - id: CON-003
+        title: "Colab Pro+ promotion protocol"
+        status: open
+
+open_source_adoption:
+  - name: OpenTelemetry
+    purpose: "Vendor-neutral observability"
+    status: recommended
+
+  - name: CodeQL
+    purpose: "Semantic security scanning"
+    status: recommended
+
+  - name: Trivy
+    purpose: "All-in-one security scanner"
+    status: recommended
+
+  - name: "OWASP Dependency-Check"
+    purpose: "SCA / CVE detection"
+    status: recommended
+
+  - name: pgvector
+    purpose: "Vector similarity search in Postgres"
+    status: recommended
+
+  - name: MCP
+    purpose: "Agent/tool interoperability standard"
+    status: recommended
