@@ -1,0 +1,51 @@
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Dependencies
+node_modules/
+.pnp.*
+.yarn/
+
+# Environment
+.env
+.env.*
+!.env.example
+.heady_secrets
+
+# Wrangler
+.wrangler/
+
+# Logs
+*.log
+logs/
+hc_pipeline.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+*.tar.gz
+.cache/
