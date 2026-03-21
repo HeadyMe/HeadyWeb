@@ -53,7 +53,7 @@ export function useAutoSuccess() {
   const [status, setStatus] = useState({
     ors: 100,
     categories: 13,
-    totalTasks: 144,
+    totalTasks: 176,
     activeReactions: 0,
     lastCycle: null,
     engine: 'active',
@@ -251,6 +251,8 @@ export function useRealtime(channels = []) {
   const [lastMessage, setLastMessage] = useState(null);
   const wsRef = useRef(null);
   const reconnectAttempt = useRef(0);
+  const channelsRef = useRef(channels);
+  channelsRef.current = channels;
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -261,7 +263,7 @@ export function useRealtime(channels = []) {
       ws.onopen = () => {
         setConnected(true);
         reconnectAttempt.current = 0;
-        channels.forEach(ch => ws.send(JSON.stringify({ type: 'subscribe', channel: ch })));
+        channelsRef.current.forEach(ch => ws.send(JSON.stringify({ type: 'subscribe', channel: ch })));
       };
       ws.onmessage = (e) => {
         try { setLastMessage(JSON.parse(e.data)); } catch {}
@@ -274,7 +276,7 @@ export function useRealtime(channels = []) {
       };
       ws.onerror = () => ws.close();
     } catch {}
-  }, [channels]);
+  }, []);
 
   const send = useCallback((type, data) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

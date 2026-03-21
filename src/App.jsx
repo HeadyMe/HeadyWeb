@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
 import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
 import HeadyIDE from './ide/HeadyIDE';
@@ -44,9 +44,6 @@ async function queryHeadyBrain(query) {
   try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, ts: Date.now() })); } catch { /* full */ }
   return result;
 }
-
-// ── Search Context ──
-const SearchContext = createContext();
 
 // ── Icons (inline SVG to avoid lucide-react import issues) ──
 const Icon = ({ d, size = 16, className = '' }) => (
@@ -292,27 +289,10 @@ function AISidebar({ open, onClose }) {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
 
-    // Call Heady Brain API
-    try {
-      const resp = await fetch('https://manager.headysystems.com/api/brain/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Heady-Source': 'headyweb-browser',
-          'X-Heady-Version': '1.0.0'
-        },
-        body: JSON.stringify({ message: userMsg, model: 'heady-brain', temperature: 0.7 })
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const answer = data.response || data.text || 'Heady Brain is thinking...';
-        setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
-      } else {
-        setMessages(prev => [...prev, { role: 'assistant', text: '⚡ Heady Brain is processing. Try again in a moment.' }]);
-      }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', text: '🔌 Could not reach Heady Brain. Check your connection.' }]);
-    }
+    // Call Heady Brain API (reuse shared queryHeadyBrain with caching + fallback)
+    const result = await queryHeadyBrain(userMsg);
+    const answer = result.response || result.text || 'Heady Brain is thinking...';
+    setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
   };
 
   return (
@@ -604,8 +584,10 @@ function AuthModal({ open, onClose, onAuth }) {
             {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
-        {/* Cloudflare Turnstile — invisible bot protection */}
-        <div className="cf-turnstile mt-3" data-sitekey="0x4AAAAAAXXXXXXXXXXXXXXX" data-theme="dark" data-size="invisible"></div>
+        {/* Cloudflare Turnstile — enabled when VITE_TURNSTILE_SITEKEY is set */}
+        {import.meta.env.VITE_TURNSTILE_SITEKEY && (
+          <div className="cf-turnstile mt-3" data-sitekey={import.meta.env.VITE_TURNSTILE_SITEKEY} data-theme="dark" data-size="invisible"></div>
+        )}
       </div>
     </div>
   );
@@ -679,9 +661,11 @@ function App() {
 
   const newTab = useCallback(() => {
     const id = Date.now();
-    setTabs(prev => [...prev, { id, title: 'New Tab', url: 'headyweb://newtab', favicon: '✦' }]);
-    setActiveTab(tabs.length);
-  }, [tabs.length]);
+    setTabs(prev => {
+      setActiveTab(prev.length);
+      return [...prev, { id, title: 'New Tab', url: 'headyweb://newtab', favicon: '✦' }];
+    });
+  }, []);
 
   const closeTab = useCallback((index) => {
     if (tabs.length <= 1) return;

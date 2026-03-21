@@ -6,7 +6,7 @@ const WELCOME = [
   { type: 'system', text: '║  HCFullPipeline v8.0 · Auto-Success Engine Active    ║' },
   { type: 'system', text: '╚══════════════════════════════════════════════════════╝' },
   { type: 'info', text: '[Heady] Manager online at :3300' },
-  { type: 'info', text: '[Heady] ORS: 100 · 13 categories · 144 tasks active' },
+  { type: 'info', text: '[Heady] ORS: 100 · 13 categories · 176 tasks active' },
   { type: 'info', text: '[Heady] WebSocket connected · φ-scaled backoff ready' },
   { type: 'success', text: '[AutoSuccess] Engine started — heartbeat every 29,034ms (φ⁷)' },
   { type: 'info', text: 'Type "help" for commands, "heady status" for system info' },
