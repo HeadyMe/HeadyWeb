@@ -1,21 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { getAllowedHosts } from './src/heady-registry.js'
 
 export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
     port: 5174,
-    allowedHosts: [
-      'headysystems.com',
-      'www.headysystems.com',
-      'web.headysystems.com',
-      'headyweb.com',
-      'www.headyweb.com',
-      'headyconnection.org',
-      'web.headyconnection.org',
-      'localhost'
-    ]
+    allowedHosts: getAllowedHosts()
   },
   build: {
     outDir: 'dist',

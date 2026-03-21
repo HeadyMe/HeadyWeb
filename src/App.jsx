@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { searchHeadyKnowledge } from './heady-knowledge.js';
-import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch } from './firebase.js';
+import { signInGoogle, signInEmail, signUpEmail, logOut, onAuthChange, logSearch, getUserPlan } from './firebase.js';
+import { HEADY_API, getQuickSites, getBookmarks, getSearchResultLinks } from './heady-registry.js';
 
 // ── Heady Brain API + Knowledge Base ──
-const HEADY_BRAIN_URL = 'https://manager.headysystems.com';
-
 async function queryHeadyBrain(query) {
   // Check sessionStorage cache first
   const cacheKey = `heady-search:${query.toLowerCase().trim()}`;
@@ -21,9 +20,9 @@ async function queryHeadyBrain(query) {
 
   // 1. Try live Brain API first (3s timeout for fast fallback)
   try {
-    const resp = await fetch(`${HEADY_BRAIN_URL}/api/brain/chat`, {
+    const resp = await fetch(HEADY_API.brainChat, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Heady-Source': 'headyweb-browser' },
+      headers: { 'Content-Type': 'application/json', 'X-Heady-Source': HEADY_API.source },
       body: JSON.stringify({ message: query, model: 'heady-brain', temperature: 0.7 }),
       signal: AbortSignal.timeout(3000),
     });
@@ -42,9 +41,6 @@ async function queryHeadyBrain(query) {
   try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, ts: Date.now() })); } catch { /* full */ }
   return result;
 }
-
-// ── Search Context ──
-const SearchContext = createContext();
 
 // ── Icons (inline SVG to avoid lucide-react import issues) ──
 const Icon = ({ d, size = 16, className = '' }) => (
@@ -166,17 +162,8 @@ function SacredGeometryBg() {
   return <canvas ref={canvasRef} id="sacred-canvas" />;
 }
 
-// ── Quick Access Sites ──
-const QUICK_SITES = [
-  { name: 'HeadySystems', url: 'https://headysystems.com', color: '#3b82f6', icon: '⚙️' },
-  { name: 'HeadyMe', url: 'https://headyme.com', color: '#8b5cf6', icon: '👤' },
-  { name: 'HeadyBuddy', url: 'https://headybuddy.org', color: '#10b981', icon: '🤖' },
-  { name: 'HeadyMCP', url: 'https://headymcp.com', color: '#f59e0b', icon: '🔌' },
-  { name: 'HeadyIO', url: 'https://headyio.com', color: '#06b6d4', icon: '🌐' },
-  { name: 'HeadyConnection', url: 'https://headyconnection.org', color: '#ec4899', icon: '🤝' },
-  { name: 'Google', url: 'https://google.com', color: '#4285f4', icon: '🔍' },
-  { name: 'GitHub', url: 'https://github.com', color: '#8b949e', icon: '🐙' },
-];
+// ── Quick Access Sites (from canonical registry) ──
+const QUICK_SITES = getQuickSites();
 
 // ── Tab Component ──
 function TabBar({ tabs, activeTab, onSelectTab, onCloseTab, onNewTab }) {
@@ -249,16 +236,9 @@ function AddressBar({ url, onNavigate, onToggleSidebar, onSearch }) {
   );
 }
 
-// ── Bookmarks Bar ──
+// ── Bookmarks Bar (from canonical registry) ──
 function BookmarksBar() {
-  const bookmarks = [
-    { name: 'HeadySystems', url: 'https://headysystems.com', icon: '⚙️' },
-    { name: 'HeadyMe', url: 'https://headyme.com', icon: '👤' },
-    { name: 'HeadyBuddy', url: 'https://headybuddy.org', icon: '🤖' },
-    { name: 'HeadyMCP', url: 'https://headymcp.com', icon: '🔌' },
-    { name: 'Heady Docs', url: 'https://docs.headysystems.com', icon: '📚' },
-    { name: 'GitHub', url: 'https://github.com', icon: '🐙' },
-  ];
+  const bookmarks = getBookmarks();
 
   return (
     <div className="bookmarks-bar">
@@ -288,12 +268,12 @@ function AISidebar({ open, onClose }) {
 
     // Call Heady Brain API
     try {
-      const resp = await fetch('https://manager.headysystems.com/api/brain/chat', {
+      const resp = await fetch(HEADY_API.brainChat, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Heady-Source': 'headyweb-browser',
-          'X-Heady-Version': '1.0.0'
+          'X-Heady-Source': HEADY_API.source,
+          'X-Heady-Version': HEADY_API.version
         },
         body: JSON.stringify({ message: userMsg, model: 'heady-brain', temperature: 0.7 })
       });
@@ -397,15 +377,11 @@ function HeadyBrainResults({ query, result, loading }) {
               </span>
             </div>
 
-            {/* Heady Ecosystem Links */}
+            {/* Heady Ecosystem Links (from registry) */}
             <div className="border-t border-white/5 pt-4">
               <div className="text-xs text-white/25 mb-3 font-medium">Related Heady Services</div>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  { name: 'Ask HeadyBuddy', url: 'https://headybuddy.org', icon: '🤖', desc: 'Interactive AI chat' },
-                  { name: 'HeadyMCP', url: 'https://headymcp.com', icon: '🔌', desc: 'API & tool integration' },
-                  { name: 'HeadySystems', url: 'https://headysystems.com', icon: '⚙️', desc: 'Architecture docs' },
-                ].map((s, i) => (
+                {getSearchResultLinks().map((s, i) => (
                   <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 hover:border-blue-500/20 hover:bg-blue-500/5 transition-all">
                     <span>{s.icon}</span>
@@ -425,7 +401,7 @@ function HeadyBrainResults({ query, result, loading }) {
 }
 
 // ── New Tab Page ──
-function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
+function NewTabPage({ onSearch, user, userPlan, onSignIn, onSignOut, onPricing }) {
   const [searchInput, setSearchInput] = useState('');
   const [time, setTime] = useState(new Date());
   const searchRef = useRef(null);
@@ -507,7 +483,14 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
                 {user.displayName?.[0] || user.email?.[0] || '?'}
               </div>
               <span className="text-white/40 text-xs">{user.displayName || user.email}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-400/70">Free</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                userPlan === 'pro' ? 'bg-blue-500/15 text-blue-400/80' :
+                userPlan === 'enterprise' ? 'bg-purple-500/15 text-purple-400/80' :
+                'bg-green-500/10 text-green-400/70'
+              }`}>{userPlan === 'pro' ? 'Pro' : userPlan === 'enterprise' ? 'Enterprise' : 'Free'}</span>
+              <button onClick={onSignOut} className="text-white/20 hover:text-white/50 text-[10px] ml-1 transition-colors">
+                Sign Out
+              </button>
             </div>
           ) : (
             <button onClick={onSignIn} className="px-4 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/15 text-blue-300 text-xs font-medium hover:bg-blue-600/30 transition-colors">
@@ -515,7 +498,7 @@ function NewTabPage({ onSearch, user, onSignIn, onPricing }) {
             </button>
           )}
           <button onClick={onPricing} className="px-4 py-1.5 rounded-full bg-purple-600/15 border border-purple-500/10 text-purple-300/80 text-xs font-medium hover:bg-purple-600/25 transition-colors">
-            View Plans
+            {user && userPlan === 'free' ? 'Upgrade' : 'View Plans'}
           </button>
         </div>
       </div>
@@ -647,14 +630,28 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchState, setSearchState] = useState({ query: '', result: null, loading: false });
   const [user, setUser] = useState(null);
+  const [userPlan, setUserPlan] = useState('free');
   const [authOpen, setAuthOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthChange(setUser);
+    const unsub = onAuthChange((u) => {
+      setUser(u);
+      if (u?.uid) {
+        getUserPlan(u.uid).then(setUserPlan);
+      } else {
+        setUserPlan('free');
+      }
+    });
     // Pre-warm connection to Heady Brain
-    fetch(`${HEADY_BRAIN_URL}/api/brain/health`, { signal: AbortSignal.timeout(2000) }).catch(() => { });
+    fetch(HEADY_API.brainHealth, { signal: AbortSignal.timeout(2000) }).catch(() => { });
     return () => unsub && unsub();
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
+    await logOut();
+    setUser(null);
+    setUserPlan('free');
   }, []);
 
   const newTab = useCallback(() => {
@@ -705,7 +702,7 @@ function App() {
 
       <div className="flex-1 relative overflow-hidden">
         {isNewTab ? (
-          <NewTabPage onSearch={handleSearch} user={user} onSignIn={() => setAuthOpen(true)} onPricing={() => setPricingOpen(true)} />
+          <NewTabPage onSearch={handleSearch} user={user} userPlan={userPlan} onSignIn={() => setAuthOpen(true)} onSignOut={handleSignOut} onPricing={() => setPricingOpen(true)} />
         ) : isSearch ? (
           <HeadyBrainResults query={searchState.query} result={searchState.result} loading={searchState.loading} />
         ) : (
