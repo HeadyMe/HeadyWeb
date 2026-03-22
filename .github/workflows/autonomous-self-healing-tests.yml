@@ -1,0 +1,189 @@
+name: Autonomous Self-Healing Tests
+
+on:
+  schedule:
+    # Every 29 minutes — aligned with Heady's 29,034ms heartbeat cycle
+    - cron: '*/29 * * * *'
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      chaos_level:
+        description: 'Chaos injection level (0-5)'
+        required: false
+        default: '1'
+      heal_mode:
+        description: 'Self-healing mode (auto|manual|dry-run)'
+        required: false
+        default: 'auto'
+
+concurrency:
+  group: self-healing-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  HEADY_SELF_HEAL: true
+  # Phi-stepped timeout constants (golden ratio ~1.618)
+  PHI_BASE_TIMEOUT: 30000
+  PHI_STEP_1: 48540
+  PHI_STEP_2: 78540
+  PHI_STEP_3: 127080
+
+jobs:
+  # ─── MONITOR Phase (MAPE-K: M) ─────────────────────────────────
+  monitor:
+    name: "MAPE-K Monitor"
+    runs-on: ubuntu-latest
+    outputs:
+      health_score: ${{ steps.health.outputs.score }}
+      test_matrix: ${{ steps.health.outputs.matrix }}
+      needs_healing: ${{ steps.health.outputs.needs_healing }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+        timeout-minutes: 5
+
+      - name: Collect health telemetry
+        id: health
+        run: |
+          node scripts/self-healing-runner.mjs monitor
+        timeout-minutes: 3
+
+  # ─── ANALYZE Phase (MAPE-K: A) ─────────────────────────────────
+  analyze:
+    name: "MAPE-K Analyze"
+    needs: monitor
+    runs-on: ubuntu-latest
+    outputs:
+      healing_plan: ${{ steps.analyze.outputs.plan }}
+      contracts_valid: ${{ steps.contracts.outputs.valid }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+        timeout-minutes: 5
+
+      - name: Validate contracts
+        id: contracts
+        run: |
+          node scripts/self-healing-runner.mjs validate-contracts
+        timeout-minutes: 2
+
+      - name: Analyze test results
+        id: analyze
+        run: |
+          node scripts/self-healing-runner.mjs analyze \
+            --health-score "${{ needs.monitor.outputs.health_score }}" \
+            --needs-healing "${{ needs.monitor.outputs.needs_healing }}"
+        timeout-minutes: 2
+
+  # ─── PLAN + EXECUTE Phase (MAPE-K: P+E) ────────────────────────
+  plan-execute:
+    name: "MAPE-K Plan + Execute"
+    needs: [monitor, analyze]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [core, contracts, resilience, chaos]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+        timeout-minutes: 5
+
+      - name: "Execute suite: ${{ matrix.suite }}"
+        run: |
+          node scripts/self-healing-runner.mjs execute \
+            --suite "${{ matrix.suite }}" \
+            --chaos-level "${{ github.event.inputs.chaos_level || '1' }}" \
+            --heal-mode "${{ github.event.inputs.heal_mode || 'auto' }}"
+        timeout-minutes: 10
+
+      - name: "Self-heal on failure (Fibonacci backoff)"
+        if: failure()
+        run: |
+          node scripts/self-healing-runner.mjs heal \
+            --suite "${{ matrix.suite }}" \
+            --max-retries 5 \
+            --backoff fibonacci
+        timeout-minutes: 8
+
+  # ─── KNOWLEDGE Phase (MAPE-K: K) ───────────────────────────────
+  knowledge:
+    name: "MAPE-K Knowledge"
+    needs: [monitor, analyze, plan-execute]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+        timeout-minutes: 5
+
+      - name: Update knowledge base
+        run: |
+          node scripts/self-healing-runner.mjs knowledge \
+            --health-score "${{ needs.monitor.outputs.health_score }}" \
+            --contracts-valid "${{ needs.analyze.outputs.contracts_valid }}" \
+            --results "${{ needs.plan-execute.result }}"
+
+      - name: Upload healing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-healing-report-${{ github.run_id }}
+          path: |
+            test-results/
+            .heady-knowledge/
+          retention-days: 30
