@@ -1,0 +1,68 @@
+# HEADY_BRAND:BEGIN
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  Cross-Repo Self-Healing Test Configuration                     ║
+# ║  Shared config for all Heady ecosystem repositories             ║
+# ╚══════════════════════════════════════════════════════════════════╝
+# HEADY_BRAND:END
+
+version: "1.0.0"
+name: self-healing-test-config
+
+# Copy this file to any Heady repo's .heady/ directory to enable
+# autonomous self-healing tests via the @heady/self-healing-tests package.
+
+# ─────────────────────────────────────────────────────────────────────
+# MAPE-K Engine Settings
+# ─────────────────────────────────────────────────────────────────────
+mapeK:
+  maxCycles: 5                       # FIB[4] — max self-heal cycles
+  testTimeout: 60000                 # 60s per test run
+  testCommand: "npm test"            # Override per-repo
+  verbose: true
+
+  # Knowledge persistence
+  knowledgeStore: .heady/pattern_store.json
+  wisdomStore: .heady/wisdom.json
+
+  # φ-Backoff between heal cycles
+  backoff:
+    fibonacci: [1, 1, 2, 3, 5, 8, 13, 21]
+    multiplierMs: 162                # φ × 100
+
+# ─────────────────────────────────────────────────────────────────────
+# Chaos Injection Settings
+# ─────────────────────────────────────────────────────────────────────
+chaos:
+  enabled: false                     # Enable per-repo or via CI input
+  baseMs: 1000
+  recoveryWindowMs: 5000
+  scenarios:
+    - redis_kill
+    - llm_primary_kill
+    - database_kill
+    - deploy_regression
+
+# ─────────────────────────────────────────────────────────────────────
+# Fuzz Testing Settings
+# ─────────────────────────────────────────────────────────────────────
+fuzz:
+  enabled: false                     # Enable per-repo or via CI input
+  payloadCount: 1000
+  maxTerminationTimeMs: 60000
+
+# ─────────────────────────────────────────────────────────────────────
+# Health Score Thresholds
+# ─────────────────────────────────────────────────────────────────────
+health:
+  psiCritical: 0.382                 # Below this → escalate to human
+  psiBoost: 0.618                    # Above this → green, keep going
+  psiInject: 0.718                   # High confidence healing
+  resonance: 0.809                   # Semantic boundary gate
+
+# ─────────────────────────────────────────────────────────────────────
+# Reporting
+# ─────────────────────────────────────────────────────────────────────
+reporting:
+  outputDir: .heady/reports
+  jsonReport: true
+  surfaceOnlyBelowCritical: true     # Don't spam logs if healthy
