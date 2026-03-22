@@ -43,10 +43,13 @@ jobs:
         node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: false
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -129,6 +132,9 @@ jobs:
     if: ${{ github.event.inputs.chaos == 'true' || github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: false
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
@@ -169,6 +175,9 @@ jobs:
     if: ${{ github.event.inputs.fuzz_count > 0 || github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: false
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:

@@ -1,0 +1,24 @@
+# HeadyWeb
+
+> Heady Web Platform
+
+HeadyWeb is the web platform for the Heady AI ecosystem, providing the browser-based interface for accessing Heady's sovereign AI capabilities.
+
+## Docs
+
+- [HeadyWeb](https://headyweb.com): Main website
+- [HeadySystems](https://headysystems.com): Core platform
+- [HeadyMe](https://headyme.com): Personal AI identity
+- [HeadyMCP](https://headymcp.com): MCP Protocol Hub
+- [HeadyConnection](https://headyconnection.org): Nonprofit arm
+- [HeadyAPI](https://headyapi.com): API layer
+- [HeadyIO](https://headyio.com): I/O Platform
+- [HeadyBuddy](https://headybuddy.org): AI Companion
+- [HeadyWeb](https://headyweb.com): Web Platform
+- [HeadyDocs](https://headydocs.com): Documentation
+
+## Optional
+
+- The Heady ecosystem uses the Heady Conductor Fault Protocol (HCFP) for auto-success remediation
+- All domains are part of a federated AI operating system with 20+ orchestration nodes
+- Built with phi-scaled architecture for sovereign AI deployment
