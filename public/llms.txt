@@ -1,0 +1,11 @@
+# HeadyWeb
+
+> Part of the Heady™ ecosystem — the world's first Sovereign AI Operating System.
+
+Built by HeadySystems Inc. (Colorado C-Corp, EIN 41-3412204).
+
+## Links
+- [HeadySystems](https://headysystems.com)
+- [HeadyMe](https://headyme.com)
+- [HeadyMCP](https://headymcp.com)
+- [HeadyAPI](https://headyapi.com)
